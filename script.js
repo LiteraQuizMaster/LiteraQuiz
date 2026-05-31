@@ -1,7 +1,7 @@
 /* =========================================================
    CONFIG / SYSTEM STATE
 ========================================================= */
-window.APP_VERSION = "2026.05.21.03";  
+window.APP_VERSION = "2026.05.21.04";  
 
 let profileFormReturnScreen = 'profile-menu-screen';
 
