@@ -1,0 +1,2611 @@
+<html lang="el">
+<head>
+<link rel="manifest" href="manifest.json">
+
+<meta name="theme-color" content="#242424">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="viewport"
+      content="width=device-width,
+               initial-scale=1.0,
+               maximum-scale=1.0,
+               user-scalable=no,
+               viewport-fit=cover">
+
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+<link rel="icon" type="image/png" href="favicon.png">
+<title>Quiz Λογοτεχνίας</title>
+<link rel="stylesheet" href="style.css?v=01">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, deleteUser, signOut, reauthenticateWithPopup } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+window.firebaseSignOut = signOut;
+window.firebaseDeleteUser=deleteUser;
+window.firebaseIncrement = increment;
+import { getFirestore,doc,getDoc,setDoc,deleteDoc,collection,addDoc,getDocs,query,where,orderBy,limit,increment,deleteField,updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+const firebaseConfig = {
+  apiKey: "AIzaSyDbeW61MQf9dqxMwxZqQhMXwecilx_3dm4",
+  authDomain: "theliteraquiz.firebaseapp.com",
+  projectId: "theliteraquiz",
+  storageBucket: "theliteraquiz.firebasestorage.app",
+  messagingSenderId: "1002140705742",
+  appId: "1:1002140705742:web:72c39c93d1ea2e3c07019f",
+  measurementId: "G-R4VBKXL5SS"
+};
+const app=initializeApp(firebaseConfig);
+const auth=getAuth(app);
+const db=getFirestore(app);
+window.firebaseAuth=auth;
+window.firebaseDB=db;
+window.firebaseDoc=doc;
+window.firebaseGetDoc=getDoc;
+window.firebaseSetDoc=setDoc;
+window.firebaseGetDocs = getDocs;
+window.firebaseQuery = query;
+window.firebaseWhere = where;  
+window.firebaseOrderBy = orderBy;
+window.firebaseLimit = limit;
+window.firebaseDeleteDoc=deleteDoc;
+window.firebaseDeleteField=deleteField;
+window.firebaseCollection=collection;
+window.firebaseAddDoc=addDoc;
+window.firebaseUpdateDoc=updateDoc;
+window.firebaseGoogleProvider=new GoogleAuthProvider();
+window.firebaseGoogleProvider.setCustomParameters({prompt:'select_account'});
+window.firebaseSignInWithPopup=signInWithPopup;
+console.log("Firebase initialized OK");
+const APP_VERSION = "2026.04.24.1";
+</script>
+</head>
+<body>
+
+<div id="global-nav-header" style="display:none;">
+    <button id="global-back-btn" onclick="handleGlobalBack()">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+    </button>
+    <div class="nav-header-center">
+        <span class="nav-app-label">literaquiz</span>
+        <span id="global-nav-title"></span>
+        <span id="global-nav-subtitle"></span>
+    </div>
+    <div style="width:38px;"></div>
+    <div id="nav-header-tabs" style="display:none; width:100%;"></div>
+</div>
+   
+<div id="app-container">
+
+  <div class="splash-screen" id="splash-screen">
+    <div class="splash-inner">
+      <h1 class="splash-title">LiteraQuiz</h1>
+      <h2 class="splash-subtitle">Το Quiz των Φίλων της Λογοτεχνίας</h2>
+
+      <img src="assets/MonstersLogo.png"
+           alt="LiteraQuiz Logo"
+           class="splash-logo">
+
+      <div class="splash-loading-wrap">
+        <div class="splash-loading-text">Ξεφυλλίζουμε τις σελίδες...</div>
+
+        <div class="splash-dots" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+
+        <div class="splash-progress">
+          <div class="splash-progress-fill" id="splash-progress-fill"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="time-bonus-popup" class="time-bonus-popup">
+    Bonus Χρόνου +12s
+  </div>
+
+
+<!-- =========================================================
+     AUTH / LOGIN
+========================================================= -->
+
+<div id="login-screen" class="screen" style="display:block;">
+
+<h1 class="logo-text">Καλώς ήρθατε</h1>
+<h2 class="logo-sub login-subtitle">
+στο LiteraQuiz
+</h2>
+
+<div class="login-field-container">
+<label class="login-label">Ψευδώνυμο</label>
+<input 
+type="text" 
+id="username-input" 
+class="login-input" 
+placeholder="Γράψτε το ψευδώνυμό σας"
+maxlength="13">
+</div>
+
+<button 
+onclick="handleLogin('guest')" 
+class="main-btn">
+Είσοδος ως επισκέπτης
+</button>
+
+<button 
+onclick="handleLogin('google-full')" 
+class="main-btn btn-google-login">
+
+<img src="https://fonts.gstatic.com/s/i/productlogos/googleg/v6/24px.svg"
+class="google-login-icon">
+
+Sign in with Google
+
+</button>
+
+<button 
+onclick="exitApp()" 
+class="main-btn btn-exit-login">
+
+Έξοδος
+
+</button>
+  
+<div class="terms-consent">
+
+<label class="terms-label">
+
+<input type="checkbox"
+       id="terms-checkbox">
+
+<span>Έχω διαβάσει και αποδέχομαι την<a href="#"
+   onclick="openPrivacyPolicy('login-screen'); return false;">Πολιτική Απορρήτου</a>και τους
+<a href="#"
+   onclick="openTermsOfUse('login-screen'); return false;">Όρους Χρήσης</a>
+</span>
+</label>
+</div>  
+
+</div>
+
+<div id="avatar-screen" class="screen" style="display:none;">
+
+    <div class="avatar-header-fixed">
+        <span class="nav-app-label">literaquiz</span>
+        <h1 class="avatar-title"><span id="display-username"></span>, επίλεξε ένα Avatar!</h1>
+        <p class="avatar-subtitle">Ξεκλείδωσε νέους χαρακτήρες παίζοντας!</p>
+        <div id="avatar-tabs-container"></div>
+    </div>
+
+    <div id="avatar-categories-wrapper"></div>
+
+    <div class="avatar-footer">
+        <button id="confirm-avatar-btn" class="footer-btn confirm-green pending" onclick="confirmAvatarSelection()" disabled>Επιβεβαίωση</button>
+        <button class="footer-btn back-red" onclick="handleAvatarBack()">Πίσω</button>
+    </div>
+
+</div>
+  
+
+<!-- =========================================================
+     MAIN MENU / HOME
+========================================================= -->
+
+<div id="start-screen" class="screen" style="display:none;">
+
+<div class="start-menu-wrap">
+
+<div class="support-row">
+    <div class="support-circle green">
+        <img src="https://cdn.jsdelivr.net/gh/LiteraQuizMaster/literaquiz-assets@main/Play.webp">
+    </div>
+
+    <button class="menu-btn btn-green"
+            onclick="goToScreen('mode-screen')">
+        Παίξε!
+    </button>
+</div>
+
+<div class="start-separator"></div>
+
+<div class="support-row">
+    <div class="support-circle blue">
+        <img src="https://cdn.jsdelivr.net/gh/LiteraQuizMaster/literaquiz-assets@main/High_Scores.webp">
+    </div>
+
+    <button class="menu-btn btn-blue"
+            onclick="goToScreen('score-choice-screen')">
+        High Scores
+    </button>
+</div>
+
+<div class="support-row">
+    <div class="support-circle purple">
+        <img src="https://cdn.jsdelivr.net/gh/LiteraQuizMaster/literaquiz-assets@main/Settings.webp">
+    </div>
+
+    <button class="menu-btn btn-purple"
+            onclick="goToScreen('support-screen')">
+        Ρυθμίσεις και Υποστήριξη
+    </button>
+</div>
+
+<div class="support-row">
+    <div class="support-circle orange">
+        <img src="https://cdn.jsdelivr.net/gh/LiteraQuizMaster/literaquiz-assets@main/Profile/My_Profile.webp">
+    </div>
+
+    <button class="menu-btn btn-orange"
+            onclick="openProfileFromStart()">
+        Επεξεργασία Προφίλ
+    </button>
+</div>
+
+<div class="support-row">
+    <div class="support-circle red">
+        <img src="https://cdn.jsdelivr.net/gh/LiteraQuizMaster/literaquiz-assets@main/Disconnect.webp">
+    </div>
+
+    <button id="logout-btn"
+            class="menu-btn btn-red"
+            onclick="handleLogout()">
+        Αποσύνδεση
+    </button>
+</div>
+
+
+</div>
+
+</div>
+
+<!-- =========================================================
+     RANK / INITIATION
+========================================================= -->
+
+<div id="rank-info-screen" class="screen" style="display:none;">
+  
+<h2 class="logo-text rank-screen-title">Βαθμίδες Κατάταξης</h2>
+<!-- ===============================
+     RANK TITLE MODE TABS
+================================ -->
+
+<div id="rank-mode-tabs" class="rank-mode-tabs">
+
+    <button id="rank-mode-male"
+            class="rank-mode-tab active"
+            onclick="setRankTitleMode('male')">
+
+        <img src="assets/rank/rank_male.webp"
+     alt="Αρσενικοί Τίτλοι"
+     class="rank-mode-portrait">
+
+        <span class="rank-mode-label">Ινστιτούτο<br>του Γκαίτε</span>
+    </button>
+
+    <button id="rank-mode-female"
+            class="rank-mode-tab"
+            onclick="setRankTitleMode('female')">
+
+        <img src="assets/rank/rank_female.webp"
+     alt="Θηλυκοί Τίτλοι"
+     class="rank-mode-portrait">
+
+        <span class="rank-mode-label">Σχολή<br>της Σαπφούς</span>
+    </button>
+
+</div>
+<div id="rank-current-box" class="rank-current-box"></div>
+<div id="rank-levels-list" class="rank-levels-list"></div>
+
+  
+</div>
+
+<!-- =========================================================
+                INITIATION RANK SCREEN
+========================================================= -->
+
+<div id="initiation-rank-screen" class="screen" style="display:none;">
+
+    <h1 class="logo-text support-logo">Τελετή Μύησης</h1>
+    <p class="logo-sub support-sub"> Πριν ξεκινήσεις, πρέπει να επιλέξεις τη Σχολή στην οποία θα φοιτήσεις. Από αυτή την επιλογή θα εξαρτηθούν οι τίτλοι και οι βοήθειες που θα σου δοθούν.</p>
+
+    <div class="rank-mode-tabs initiation-rank-tabs">
+
+        <button id="initiation-rank-mode-male"
+                class="rank-mode-tab"
+                onclick="selectInitiationRank('male')">
+
+            <img src="https://i.ibb.co/Pv1tdS5J/rank-male.png"
+                 alt="Αρσενικοί Τίτλοι"
+                 class="rank-mode-portrait">
+
+            <span class="rank-mode-label">Ινστιτούτο του Γκαίτε</span>
+        </button>
+
+        <button id="initiation-rank-mode-female"
+                class="rank-mode-tab"
+                onclick="selectInitiationRank('female')">
+
+            <img src="https://i.ibb.co/FL7bfWpP/rank-female.png"
+                 alt="Θηλυκοί Τίτλοι"
+                 class="rank-mode-portrait">
+
+            <span class="rank-mode-label">Σχολή της Σαπφούς</span>
+        </button>
+
+    </div>
+
+    <button id="initiation-continue-btn"
+            class="main-btn"
+            onclick="continueInitiationRank()"
+            disabled>
+        Συνέχεια
+    </button>
+
+</div>
+  
+<div id="initiation-profile-screen" class="screen" style="display:none;">
+
+    <h1 class="logo-text support-logo">Καταγραφή στο Μητρώο</h1>
+    <p class="logo-sub support-sub">
+        Συμπλήρωσε το όνομά σου και τις λογοτεχνικές σου προτιμήσεις.
+        Έτσι θα ξεκλειδώσεις περισσότερες δυνατότητες.
+    </p>
+
+    <div class="profile-form-box">
+
+        <div class="form-group">
+            <label>Ποιο είναι το όνομά σου;</label>
+            <input type="text" id="initiation-real-name-input" placeholder="Προαιρετικό πεδίο...">
+        </div>
+
+        <div class="profile-mini-card card-blue">
+            <h3>Αγαπημένοι/ες πεζογράφοι (3)</h3>
+            <input type="text" class="profile-mini-input prose-input" placeholder="Πεζογράφος 1">
+            <input type="text" class="profile-mini-input prose-input" placeholder="Πεζογράφος 2">
+            <input type="text" class="profile-mini-input prose-input" placeholder="Πεζογράφος 3">
+        </div>
+
+        <div class="profile-mini-card card-green">
+            <h3>Αγαπημένοι/ες ποιητές/ποιήτριες (3)</h3>
+            <input type="text" class="profile-mini-input poet-input" placeholder="Ποιητής/Ποιήτρια 1">
+            <input type="text" class="profile-mini-input poet-input" placeholder="Ποιητής/Ποιήτρια 2">
+            <input type="text" class="profile-mini-input poet-input" placeholder="Ποιητής/Ποιήτρια 3">
+        </div>
+
+        <div class="profile-mini-card card-red">
+            <h3>Αγαπημένοι/ες θεατρικοί συγγραφείς (3)</h3>
+            <input type="text" class="profile-mini-input playwright-input" placeholder="Θεατρικός 1">
+            <input type="text" class="profile-mini-input playwright-input" placeholder="Θεατρικός 2">
+            <input type="text" class="profile-mini-input playwright-input" placeholder="Θεατρικός 3">
+        </div>
+
+        <div class="profile-mini-card card-orange">
+            <h3>Αγαπημένα βιβλία (5)</h3>
+            <input type="text" class="profile-mini-input book-input" placeholder="Βιβλίο 1">
+            <input type="text" class="profile-mini-input book-input" placeholder="Βιβλίο 2">
+            <input type="text" class="profile-mini-input book-input" placeholder="Βιβλίο 3">
+            <input type="text" class="profile-mini-input book-input" placeholder="Βιβλίο 4">
+            <input type="text" class="profile-mini-input book-input" placeholder="Βιβλίο 5">
+        </div>
+
+        <div class="profile-mini-card card-purple">
+            <h3>Αγαπημένοι/ες λογοτεχνικοί ήρωες/ηρωίδες</h3>
+            <input type="text" class="profile-mini-input hero-input" placeholder="Ήρωας/ηρωίδα 1">
+            <input type="text" class="profile-mini-input hero-input" placeholder="Ήρωας/ηρωίδα 2">
+            <input type="text" class="profile-mini-input hero-input" placeholder="Ήρωας/ηρωίδα 3">
+        </div>
+
+        <div class="initiation-profile-buttons">
+
+            <button class="main-btn initiation-green-btn"
+                onclick="completeInitiationProfile()">
+                Συνέχεια
+            </button>
+
+            <button class="back-btn initiation-red-btn"
+                onclick="goToScreen('initiation-rank-screen')">
+                Πίσω
+            </button>
+
+            <button class="back-btn initiation-purple-btn"
+                onclick="skipInitiationProfile()">
+                Θα επιστρέψω αργότερα
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+  
+
+<!-- =========================================================
+     GAME FLOW
+========================================================= -->
+
+<div id="mode-screen" class="screen" style="display:none;">
+        <h2 class="logo-sub">Επίλεξε game mode</h2>
+
+<div class="mode-card" id="time-attack-card" onclick="selectMode('TimeAttack')">
+
+    <div class="mode-card-layout">
+
+        <div class="mode-text">
+
+            <h3>Time Attack</h3>
+
+           <p><strong>45 δευτερόλεπτα. 
+            <br>Βροχή Ερωτήσεων.</strong>
+            <br> Εσύ ενάντια στον χρόνο
+            <br> με όπλο τις λογοτεχνικές σου γνώσεις!  </p>
+        </div>
+
+        <div class="mode-image-box">
+            <img src="assets/Game Modes/Time_Attack.webp" class="mode-big-icon">
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<div class="mode-card" id="answer10-card" onclick="selectMode('Answer10')">
+
+    <div class="mode-card-layout">
+
+        <div class="mode-text">
+
+            <h3>Answer 10</h3>
+
+             <p>Απάντησε σε <strong>10 ερωτήσεις</strong>. 
+                <br><strong>20 δευτερόλεπτα </strong> για κάθε μία.
+                <br><strong>Στόχος</strong> το απόλυτο <strong>10/10</strong>!</p> 
+
+        </div>
+
+        <div class="mode-image-box">
+            <img src="assets/Game Modes/Answer_10.webp" class="mode-big-icon">
+        </div>
+
+    </div>
+
+</div>
+
+<div class="mode-card" id="challenge-card" onclick="selectMode('Challenge')">
+
+    <div class="mode-card-layout">
+
+        <div class="mode-text">
+
+            <h3>Left vs Right</h3>
+
+            <p> Επίλεξε πρόκληση! 
+                <br>Στόχος να επιβιώσεις όσο περισσότερο μπορείς. 
+                <br>Θα χρειαστείς <strong>γνώση</strong> και <strong>ταχύτητα</strong>!
+            </p>
+
+        </div>
+
+        <div class="mode-image-box">
+            <img src="assets/Game Modes/LeftVsRight.webp" class="mode-big-icon">
+        </div>
+
+    </div>
+
+</div>
+
+<div class="mode-card" id="Weekly-Challenge-card" onclick="selectMode('Weekly-Challenge')">
+    <div class="mode-card-layout">
+        <div class="mode-text">
+            <h3>Weekly Challenge</h3>
+            <p> <strong>Η εβδομαδιαία Πρόκληση!</strong>
+                <br>Συνδύασε τα στοιχεία και
+                <br>βρες το βιβλίο, τον ήρωα ή τον συγγραφέα!
+            </p>
+        </div>
+        <div class="mode-image-box">
+            <img src="assets/Game Modes/Weekly Challenge.webp" class="mode-big-icon">
+        </div>
+    </div>
+</div>
+
+
+
+    </div>
+
+<!-- =========================================================
+     CHALLENGE OPTIONS
+========================================================= -->
+
+<div id="challenge-options-screen" class="screen" style="display:none;">
+
+    <p class="logo-sub">Διάλεξε μια ειδική δοκιμασία</p>
+
+    <div class="challenge-options-wrap">
+
+        <div class="support-row">
+            <div class="support-circle yellow">
+                <img src="assets/Left_vs_Right/Find_the_country.webp" alt="Βρες τη χώρα">
+            </div>
+
+            <button class="menu-btn btn-yellow"
+                    onclick="openFindCountryIntro()">
+                Βρες τη χώρα
+            </button>
+        </div>
+
+        <div class="support-row">
+            <div class="support-circle blue">
+                <img src="assets/Left_vs_Right/Find_the_era.webp" alt="Βρες την εποχή">
+            </div>
+
+            <button class="menu-btn btn-blue"
+                    onclick="showChallengeSoonMessage()">
+                Βρες την εποχή
+            </button>
+        </div>
+
+        <div class="support-row">
+            <div class="support-circle purple">
+                <img src="assets/Left_vs_Right/Find_the_author.webp" alt="Βρες το βιβλίο">
+            </div>
+
+            <button class="menu-btn btn-purple"
+                    onclick="showChallengeSoonMessage()">
+                Βρες το βιβλίο
+            </button>
+        </div>
+
+    </div>
+
+</div><!-- end challenge-options-screen -->
+
+<!-- =========================================================
+     FIND COUNTRY INTRO
+========================================================= -->
+
+<div id="find-country-intro-screen"
+     class="screen"
+     style="display:none;">
+
+    <p class="logo-sub">
+        Πρόκληση: Βρες τη χώρα
+    </p>
+
+<div class="vs-row">
+
+    <div class="vs-country">
+        <img id="find-country-left-flag" src="" alt="">
+        <div id="find-country-left-name" class="vs-country-name"></div>
+    </div>
+
+    <div class="vs-text">VS</div>
+
+    <div class="vs-country">
+        <img id="find-country-right-flag" src="" alt="">
+        <div id="find-country-right-name" class="vs-country-name"></div>
+    </div>
+
+</div>
+
+    <div class="panel language-panel">
+
+    <p class="panel-title">
+        Γλώσσα εμφάνισης μη Ελλήνων συγγραφέων
+    </p>
+
+    <div class="lang-switch-row">
+        <span id="lang-label-el" class="lang-label active">Ελληνικά</span>
+
+        <label class="lang-switch">
+            <input type="checkbox" id="country-lang-toggle" onchange="toggleCountryLang()">
+            <span class="lang-slider"></span>
+        </label>
+
+        <span id="lang-label-en" class="lang-label">English</span>
+    </div>
+
+</div>
+
+    <div class="panel instructions-panel">
+
+        <ul class="instructions-list">
+            <li>Βρες σε ποια <strong>χώρα</strong> ανήκει κάθε <strong>συγγραφέας</strong>.</li>
+            <li>Ξεκινάς με 10 δευτερόλεπτα.</li>
+            <li>Σωστό: +2s και +2 <img src='assets/rank_goals/Pergamenas.webp' style='width:16px;height:16px;vertical-align:middle;'></li>
+            <li>Λάθος: −1s</li>
+        </ul>
+
+    </div>
+
+<button class="main-btn find-country-start-btn"
+        onclick="startFindCountryGame()">
+    Έναρξη πρόκλησης
+</button>
+
+</div>
+
+<!-- =========================================================
+     FIND COUNTRY GAME SCREEN
+========================================================= -->
+
+<div id="find-country-game-screen" class="screen" style="display:none;">
+
+    <div class="hud find-country-hud">
+        <div class="find-country-hud-box">
+            <div class="find-country-hud-label">ΧΡΟΝΟΣ</div>
+            <div id="find-country-timer" class="find-country-hud-value">10.0s</div>
+        </div>
+
+        <div class="find-country-hud-box">
+            <div class="find-country-hud-label">ΓΥΡΟΣ</div>
+            <div id="find-country-round" class="find-country-hud-value">1 / 16</div>
+        </div>
+
+        <div class="find-country-hud-box">
+            <div class="find-country-hud-label">ΠΕΡΓΑΜΗΝΕΣ</div>
+            <div id="find-country-scrolls" class="find-country-hud-value">0</div>
+        </div>
+    </div>
+
+    <div class="progress-bar find-country-progress">
+        <div id="find-country-progress-fill"></div>
+    </div>
+
+<div class="find-country-arena">
+
+    <div class="find-country-side find-country-side-left" id="find-country-left-side">
+        <img id="find-country-game-left-flag" src="" alt="">
+        <div id="find-country-game-left-name" class="find-country-side-name"></div>
+    </div>
+
+    <div class="find-country-side find-country-side-right" id="find-country-right-side">
+        <img id="find-country-game-right-flag" src="" alt="">
+        <div id="find-country-game-right-name" class="find-country-side-name"></div>
+    </div>
+
+    <div class="find-country-center">
+        <button id="find-country-arrow-left"
+                class="find-country-arrow"
+                onclick="answerFindCountry('left')">
+            ‹
+        </button>
+
+        <div id="find-country-author-box">
+            Συγγραφέας
+        </div>
+
+        <button id="find-country-arrow-right"
+                class="find-country-arrow"
+                onclick="answerFindCountry('right')">
+            ›
+        </button>
+    </div>
+
+</div>
+
+    <div class="find-country-controls-note">
+        Swipe / Drag / Βελάκια / Κουμπιά
+    </div>
+
+    <div class="find-country-bottom-buttons">
+        <button class="menu-btn btn-blue" onclick="answerFindCountry('left')">
+            Αριστερά
+        </button>
+
+        <button class="menu-btn btn-purple" onclick="answerFindCountry('right')">
+            Δεξιά
+        </button>
+    </div>
+
+    <div id="find-country-toast" class="find-country-toast"></div>
+
+<div id="find-country-finish-overlay" class="find-country-finish-overlay" style="display:none;">
+
+    <div class="find-country-finish-card">
+
+        <h2 class="find-country-finish-title">Τέλος πρόκλησης</h2>
+
+        <div class="find-country-finish-stats">
+
+            <div class="find-country-finish-stat">
+                <span class="find-country-finish-label">Σωστές</span>
+                <span id="find-country-finish-correct" class="find-country-finish-value">0</span>
+            </div>
+
+            <div class="find-country-finish-stat">
+                <span class="find-country-finish-label">Λάθη</span>
+                <span id="find-country-finish-wrong" class="find-country-finish-value">0</span>
+            </div>
+
+            <div class="find-country-finish-stat">
+                <span class="find-country-finish-label">Περγαμηνές</span>
+                <span id="find-country-finish-pergamena" class="find-country-finish-value">0</span>
+            </div>
+
+            <div class="find-country-finish-stat">
+                <span class="find-country-finish-label">Ολοκλήρωση</span>
+                <span id="find-country-finish-rounds" class="find-country-finish-value">0 / 16</span>
+            </div>
+
+        </div>
+
+        <button class="main-btn find-country-start-btn"
+                onclick="restartFindCountryGame()">
+            Παίξε ξανά
+        </button>
+
+        <button class="main-btn find-country-back-btn"
+                onclick="closeFindCountryFinishToChallenges()">
+            Πίσω στις Προκλήσεις
+        </button>
+
+    </div>
+
+</div>
+
+    <button class="back-btn" onclick="exitFindCountryGame()">Έξοδος</button>
+
+</div>
+<!-- =========================================================
+     SCORES / PANTHEON
+========================================================= -->
+
+<div id="score-choice-screen" class="screen" style="display:none;">
+    <h2 class="logo-sub">High Scores</h2>
+
+    <div class="score-group-block">
+        <h3 class="hall-title">Ο δρόμος της Δόξας</h3>
+
+        <div class="support-row">
+            <div class="support-circle pantheon">
+                <img src="assets/High_Scores/Pantheon.webp" alt="Pantheon">
+            </div>
+
+            <button onclick="openPantheon()" class="score-menu-btn btn-black">
+                Το Πάνθεον των Ξερόλων
+            </button>
+        </div>
+    </div>
+
+    <div class="score-group-block">
+        <h3 class="score-section-title">Weekly Challenge</h3>
+
+        <div class="support-row">
+            <div class="support-circle green">
+                <img src="assets/weekly_challenge/Weekly_Challenge.webp" alt="Weekly Challenge">
+            </div>
+
+            <button onclick="goToScreen('wc-scores-screen')" class="score-menu-btn btn-green weekly-btn">
+                Weekly Challenge
+            </button>
+        </div>
+    </div>
+
+    <div class="score-group-block">
+        <h3 class="score-section-title">Global High Scores</h3>
+
+        <div class="support-row">
+            <div class="support-circle orange">
+                <img src="assets/High_Scores/Global.webp" alt="Global Scores">
+            </div>
+
+            <div class="mode-column">
+                <button onclick="openHighScoreCategory('global','TimeAttack')" class="score-menu-btn global-btn">
+                    Time Attack
+                </button>
+
+                <button onclick="openHighScoreCategory('global','Answer10')" class="score-menu-btn global-btn global-btn-light">
+                    Answer 10
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="score-group-block">
+        <h3 class="score-section-title">Τα δικά μου High Scores</h3>
+
+        <div class="support-row">
+            <div class="support-circle blue">
+                <img src="assets/High_Scores/Personal.webp" alt="Local High Scores">
+            </div>
+
+            <div class="mode-column">
+                <button onclick="openHighScoreCategory('personal','TimeAttack')" class="score-menu-btn personal-btn">
+                    Time Attack
+                </button>
+
+                <button onclick="openHighScoreCategory('personal','Answer10')" class="score-menu-btn personal-btn personal-btn-light">
+                    Answer 10
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+    
+<div id="category-screen" class="screen" style="display:none;">
+
+    <h2 class="logo-sub category-screen-title">Επίλεξε Κατηγορία</h2>
+
+    <div class="category-menu-list">
+
+        <div class="support-row">
+            <div class="support-circle blue">
+                <img src="assets/Answer10/Greek.webp" alt="Ελληνική Λογοτεχνία">
+            </div>
+
+            <button class="menu-btn btn-blue"
+                    onclick="selectCategory('Ελληνική')">
+                Ελληνική Λογοτεχνία
+            </button>
+        </div>
+
+        <div class="support-row">
+            <div class="support-circle red">
+                <img src="assets/Answer10/GlobalLiter.webp" alt="Παγκόσμια Λογοτεχνία">
+            </div>
+
+            <button class="menu-btn btn-red"
+                    onclick="selectCategory('Παγκόσμια')">
+                Παγκόσμια Λογοτεχνία
+            </button>
+        </div>
+
+        <div class="support-row">
+            <div class="support-circle yellow">
+                <img src="assets/Answer10/All.webp" alt="Τα Πάντα Όλα">
+            </div>
+
+            <button class="menu-btn btn-yellow"
+                    onclick="selectCategory('All')">
+                Τα Πάντα Όλα
+            </button>
+        </div>
+
+    </div>
+
+</div>
+
+<div id="difficulty-screen" class="screen" style="display:none;">
+
+<h2 class="logo-sub">
+    Επίπεδο Δυσκολίας
+</h2>
+
+
+<!-- ========================= -->
+<!-- ΕΞΑΣΚΗΣΗ -->
+<!-- ========================= -->
+
+<div class="difficulty-group difficulty-training">
+
+    <div class="difficulty-category-label">Κατηγορία</div>
+    <h3 class="difficulty-group-title">
+        🎯 Εξάσκηση
+    </h3>
+
+    <p class="difficulty-group-sub">
+        Για εξοικείωση με το παιχνίδι.<br>
+        Τα 10/10 εδώ δεν μετράνε σε Ranking ή Pantheon.
+    </p>
+
+<div class="difficulty-buttons">
+
+    <button class="difficulty-btn difficulty-easy"
+            onclick="setDifficulty('Easy')">
+
+        <div class="difficulty-title">Εύκολο</div>
+        <div class="difficulty-points"><span class="pts-pill">2 pts / σωστή</span></div>
+
+    </button>
+
+    <button class="difficulty-btn difficulty-medium"
+            onclick="setDifficulty('Medium')">
+
+        <div class="difficulty-title">Μεσαίο</div>
+        <div class="difficulty-points"><span class="pts-pill">5 pts / σωστή</span></div>
+
+    </button>
+
+</div>
+
+</div>
+
+
+
+<!-- ========================= -->
+<!-- ΕΠΙΣΗΜΗ ΚΑΤΑΤΑΞΗ -->
+<!-- ========================= -->
+
+<div class="difficulty-group difficulty-ranked">
+
+    <div class="difficulty-category-label">Κατηγορία</div>
+    <h3 class="difficulty-group-title">
+        🏆 Επίσημη Κατάταξη
+    </h3>
+
+    <p class="difficulty-group-sub">
+        Μόνο τα επίπεδα Δύσκολο και Κλιμάκωση μετράνε<br>
+        στο Ranking System και στο Pantheon.
+    </p>
+
+<div class="difficulty-buttons">
+
+    <button class="difficulty-btn difficulty-hard"
+            onclick="setDifficulty('Hard')">
+
+        <div class="difficulty-title">Δύσκολο</div>
+        <div class="difficulty-points ranked-mode"><span class="pts-pill">10 pts / σωστή</span></div>
+
+    </button>
+
+    <button class="difficulty-btn difficulty-scaling"
+            onclick="setDifficulty('Scaling')">
+
+        <div class="difficulty-title">Κλιμάκωση</div>
+        <div class="difficulty-points ranked-mode"><span class="pts-pill">8 pts / σωστή</span></div>
+
+    </button>
+
+</div>
+
+</div>
+
+</div>
+    
+<div id="game-screen" class="screen" style="display:none;">
+
+    <div id="game-nav-header" class="game-nav-header">
+        <div style="width:38px;"></div>
+        <span class="nav-app-label" style="opacity:0.5; font-size:13px;">literaquiz</span>
+        <button id="fixed-exit-btn" onclick="confirmExit()">✕</button>
+    </div>
+
+        <div class="hud">
+            <div id="progress-text">Προετοιμασία...</div>
+            <div id="streak-badge" class="is-hidden-inline">🔥 <span id="streak-count">0</span> ΣΕΡΙ!</div>
+            <div id="timer-text" class="big-timer">1:00</div>
+        </div>
+        <div class="progress-bar"><div id="progress-fill"></div></div>
+        <div id="question-container"><h2 id="q-text">Φόρτωση...</h2></div>
+        <div id="options"></div>
+  
+  <div id="score-gain-pop" class="score-gain-pop">+10</div>
+
+<div id="hero-boost-indicator" style="display:none;">
+    ⚔ x2 Πόντοι
+</div>
+  
+<div id="freeze-indicator" style="display:none;">
+    ❄ Freeze Time
+</div>
+  
+  <div id="poetry-help-indicator">✒ Ποιητική Άδεια • Διάλεξε ξανά</div>
+  <div id="dragon-bonus-indicator" style="display:none;">🐉 BONUS ΕΡΩΤΗΣΗ</div>
+  
+  
+<div id="helps-bar">
+  
+
+    <button id="help-slot-1" class="help-slot" onclick="handleHelpSlotClick(1)">
+        <img id="help-slot-img-1" src="https://i.ibb.co/VWyXVsTj/locked.png" alt="Help 1">
+    </button>
+
+    <button id="help-slot-2" class="help-slot" onclick="handleHelpSlotClick(2)">
+        <img id="help-slot-img-2" src="https://i.ibb.co/VWyXVsTj/locked.png" alt="Help 2">
+    </button>
+
+    <button id="help-slot-3" class="help-slot" onclick="handleHelpSlotClick(3)">
+        <img id="help-slot-img-3" src="https://i.ibb.co/VWyXVsTj/locked.png" alt="Help 3">
+    </button>
+
+    <button id="help-slot-4" class="help-slot" onclick="handleHelpSlotClick(4)">
+        <img id="help-slot-img-4" src="https://i.ibb.co/VWyXVsTj/locked.png" alt="Help 4">
+    </button>
+
+</div>
+  
+    </div>
+
+<div id="finish-screen" class="screen" style="display:none;">
+    <div class="avatar-header-fixed summary-header">
+        <span class="nav-app-label">literaquiz</span>
+        <div id="final-mode-label" class="finish-mode-label"></div>
+        <h1 class="logo-text finish-score-title">
+            Σκορ: <span id="final-score-value">0</span> pts
+        </h1>
+        <p id="score-message" class="logo-sub finish-score-message">Το αποτέλεσμα θα εμφανιστεί σε λίγο...</p>
+    </div>
+
+    <div id="summary-container-wrapper">
+        <div id="summary-container">
+            </div>
+    </div>
+
+    <div class="avatar-footer">
+        <button onclick="goToScreen('start-screen')" class="footer-btn confirm-green active">Αρχική Σελίδα</button>
+    </div>
+</div>
+
+<div id="score-menu-screen" class="screen" style="display:none;">
+        <h2 class="logo-sub">High Scores</h2>
+      
+<div class="tabs" id="difficulty-tabs">
+    <button onclick="selectTab(this, 'Easy')" class="tab-btn">Εύκολο</button>
+    <button onclick="selectTab(this, 'Medium')" class="tab-btn">Μεσαίο</button>
+    <button onclick="selectTab(this, 'Hard')" class="tab-btn">Δύσκολο</button>
+    <button onclick="selectTab(this, 'Scaling')" class="tab-btn active">Κλιμάκωση</button>
+</div>
+
+<div class="tabs is-hidden" id="timeattack-tabs">
+<button onclick="selectTimeAttackTab(this,'score')" class="tab-btn active">Best Score</button>
+<button onclick="selectTimeAttackTab(this,'streak')" class="tab-btn">Best Streak</button>
+<button onclick="selectTimeAttackTab(this,'run')" class="tab-btn">Best Run</button>
+</div>
+        <div id="score-list"></div>
+        <div id="score-cat-filters" class="score-cat-filters">
+            <button onclick="selectCat(this, 'Ελληνική')" class="score-cat-btn active">Ελληνική</button>
+            <button onclick="selectCat(this, 'Παγκόσμια')" class="score-cat-btn">Παγκόσμια</button>
+            <button onclick="selectCat(this, 'All')" class="score-cat-btn">Όλα</button>
+        </div>
+    </div>
+  
+<div id="pantheon-screen" class="screen" style="display:none;">
+<div class="pantheon-tabs" id="pantheon-tabs"></div>
+<h1 class="pantheon-title" id="pantheon-title">Ο Απόλυτος</h1>
+    <p class="pantheon-subtitle" id="pantheon-subtitle"></p>
+<div id="pantheon-list" class="pantheon-list"></div>
+
+<div id="pantheon-player-modal" class="modal is-hidden" onclick="handlePantheonModalBackdrop(event)">
+  <div class="modal-content pantheon-player-modal-content">
+
+    <h1 class="logo-text support-logo">Προσωπική Κάρτα</h1>
+    <p class="logo-sub support-sub">Λίγα πράγματα για μένα</p>
+
+    <div class="player-card-preview" id="pantheon-player-card">
+
+      <div class="player-card-top">
+        <div class="player-card-avatar-wrap">
+          <img id="pantheon-preview-card-avatar" src="assets/default-avatar.png" alt="Player">
+        </div>
+
+        <div class="player-card-heading">
+          <div id="pantheon-preview-card-realname" class="preview-card-realname">Πραγματικό Όνομα</div>
+          <div id="pantheon-preview-card-username" class="preview-card-username">@username</div>
+          <div id="pantheon-preview-card-rank" class="preview-card-ran  ">Βαθμίδα</div>
+        </div>
+      </div>
+
+      <div class="player-card-section">
+        <div class="player-card-section-title">Αγαπημένοι Πεζογράφοι</div>
+        <div id="pantheon-preview-card-prose" class="player-card-tags"></div>
+      </div>
+
+      <div class="player-card-section">
+        <div class="player-card-section-title">Αγαπημένοι Ποιητές</div>
+        <div id="pantheon-preview-card-poets" class="player-card-tags"></div>
+      </div>
+
+      <div class="player-card-section">
+        <div class="player-card-section-title">Αγαπημένοι Θεατρικοί Συγγραφείς</div>
+        <div id="pantheon-preview-card-playwrights" class="player-card-tags"></div>
+      </div>
+
+      <div class="player-card-section">
+        <div class="player-card-section-title">Αγαπημένα Βιβλία</div>
+        <div id="pantheon-preview-card-books" class="player-card-tags"></div>
+      </div>
+
+      <div class="player-card-section">
+        <div class="player-card-section-title">Αγαπημένοι Λογοτεχνικοί Ήρωες</div>
+        <div id="pantheon-preview-card-heroes" class="player-card-tags"></div>
+      </div>
+
+    </div>
+
+    <div class="player-card-preview-actions">
+      <button class="menu-btn btn-red" onclick="closePantheonPlayerCard()">
+        <span class="menu-emoji">✖</span>Κλείσιμο
+      </button>
+    </div>
+
+  </div>
+</div>  
+  
+
+</div>
+
+<!-- =========================================================
+     SUPPORT / PROFILE / HELP LIBRARY
+========================================================= -->
+
+<div id="support-screen" class="screen" style="display:none;">
+
+<div class="support-content">
+
+<div id="tab-settings" class="support-panel active">
+
+<div class="setting-row">
+    <span class="setting-label">
+        <img src="https://cdn.jsdelivr.net/gh/LiteraQuizMaster/literaquiz-assets@main/Help and Support/Settings/Sounds.webp" class="setting-icon" alt="Ήχοι">
+        Ήχοι
+    </span>
+    <div class="pill-toggle" id="sound-pill" onclick="toggleSoundPill()">
+        <div class="pill-thumb" id="sound-thumb"></div>
+        <span class="pill-label" id="sound-label-on">Με</span>
+        <span class="pill-label" id="sound-label-off">Χωρίς</span>
+    </div>
+</div>
+
+<div class="setting-row">
+    <span class="setting-label">
+        <img src="https://cdn.jsdelivr.net/gh/LiteraQuizMaster/literaquiz-assets@main/Help and Support/Settings/Music.webp" class="setting-icon" alt="Μουσική">
+        Μουσική
+    </span>
+    <div class="pill-toggle" id="music-pill" onclick="toggleMusicPill()">
+        <div class="pill-thumb" id="music-thumb"></div>
+        <span class="pill-label" id="music-label-on">Με</span>
+        <span class="pill-label" id="music-label-off">Χωρίς</span>
+    </div>
+</div>
+
+<div class="setting-row theme-setting-row">
+    <span class="setting-label">
+        <img src="https://cdn.jsdelivr.net/gh/LiteraQuizMaster/literaquiz-assets@main/Help and Support/Settings/Dark_Light.webp" class="setting-icon" alt="Θέμα εμφάνισης">
+        Θέμα εμφάνισης
+    </span>
+    <div class="pill-toggle" id="theme-pill" onclick="toggleThemePill()">
+        <div class="pill-thumb" id="theme-thumb"></div>
+        <span class="pill-label" id="theme-label-light">Φωτεινό</span>
+        <span class="pill-label" id="theme-label-dark">Σκοτεινό</span>
+    </div>
+</div>
+</div> 
+
+<div id="tab-support" class="support-panel">
+<div class="support-row">
+    <div class="support-circle green">
+        <img src="https://cdn.jsdelivr.net/gh/LiteraQuizMaster/literaquiz-assets@main/Help and Support/Support/Submit_Question.webp">
+    </div>
+    <button class="menu-btn btn-green"
+            onclick="openSupportPage('new-q')">Στείλτε τη δική σας ερώτηση</button>
+</div>
+<div class="support-row">
+    <div class="support-circle red">
+        <img src="https://cdn.jsdelivr.net/gh/LiteraQuizMaster/literaquiz-assets@main/Help and Support/Support/Send_Report.webp">
+    </div>
+    <button class="menu-btn btn-red"
+            onclick="openSupportPage('error')">Αναφορά λάθους</button>
+</div>
+
+<div class="support-row">
+<div class="support-circle purple">
+<img src="https://cdn.jsdelivr.net/gh/LiteraQuizMaster/literaquiz-assets@main/Help and Support/Support/Support_Litera.webp">
+</div>
+<button class="menu-btn btn-purple" onclick="openDonateModal()">Υποστηρίξτε το LiteraQuiz</button>
+</div>
+<div class="support-row">
+<div class="support-circle blue">
+<img src="https://cdn.jsdelivr.net/gh/LiteraQuizMaster/literaquiz-assets@main/Help and Support/Support/Update_Check.webp">
+</div>
+<button class="menu-btn btn-blue"
+onclick="forceAppUpdate()">
+Έλεγχος για ενημερώσεις
+</button>
+</div>
+<div class="support-row">
+
+<div class="support-circle yellow">
+<img src="https://cdn.jsdelivr.net/gh/LiteraQuizMaster/literaquiz-assets@main/Help and Support/Support/App_Info.webp">
+</div>
+
+<button class="menu-btn btn-yellow"
+onclick="openAppInfoModal()">
+
+Πληροφορίες εφαρμογής
+
+</button>
+
+</div>
+</div>
+
+<div id="tab-game" class="support-panel">
+
+<div class="support-row">
+    <div class="support-circle blue">
+        <img src="https://cdn.jsdelivr.net/gh/LiteraQuizMaster/literaquiz-assets@main/Help and Support/Game/Profile.webp">
+    </div>
+
+    <button class="menu-btn btn-blue"
+            onclick="openMyProfileScreen()">Το προφίλ μου</button>
+</div>
+
+  <div class="support-row">
+    <div class="support-circle yellow">
+        <img src="https://cdn.jsdelivr.net/gh/LiteraQuizMaster/literaquiz-assets@main/Help and Support/Game/Helps_Book.webp" alt="Βιβλίο Βοηθειών">
+    </div>
+
+    <button class="menu-btn btn-yellow"
+            onclick="goToScreen('help-library-screen')">
+        Βιβλίο Βοηθειών
+    </button>
+</div>
+  
+<div class="support-row">
+    <div class="support-circle purple">
+        <img src="https://cdn.jsdelivr.net/gh/LiteraQuizMaster/literaquiz-assets@main/Help and Support/Game/Refresh Account.webp">
+    </div>
+
+    <button class="menu-btn btn-purple"
+            onclick="openResetProgressModal()">Επαναφορά προόδου</button>
+</div>
+
+</div>
+ 
+<div id="tab-privacy" class="support-panel">
+
+
+    
+<div class="support-row">
+    <div class="support-circle orange">
+        <img src="https://cdn.jsdelivr.net/gh/LiteraQuizMaster/literaquiz-assets@main/Help and Support/Privacy/Privacy_Policy.webp">
+    </div>
+
+    <button class="menu-btn btn-orange"
+            onclick="openPrivacyPolicy()">
+        Πολιτική Απορρήτου
+    </button>
+</div>
+
+<div class="support-row">
+    <div class="support-circle purple">
+        <img src="https://cdn.jsdelivr.net/gh/LiteraQuizMaster/literaquiz-assets@main/Help and Support/Privacy/Terms.webp">
+    </div>
+
+    <button class="menu-btn btn-purple"
+            onclick="openTermsOfUse()">
+        Όροι Χρήσης
+    </button>
+</div>
+
+<div class="support-row">
+    <div class="support-circle black">
+        <img src="https://cdn.jsdelivr.net/gh/LiteraQuizMaster/literaquiz-assets@main/Help and Support/Privacy/Delete_Account.webp">
+    </div>
+
+    <button class="menu-btn btn-black"
+            onclick="openDeleteAccountModal()">
+        Διαγραφή Λογαριασμού
+    </button>
+</div>
+
+</div>
+
+</div>
+</div>
+
+<div id="privacy-policy-screen" class="screen" style="display:none;">
+
+    <h1 class="logo-text support-logo">
+        Πολιτική Απορρήτου
+    </h1>
+
+    <div class="policy-container">
+
+        <div class="policy-text">
+
+<p><strong>Τελευταία ενημέρωση:</strong> 2026</p>
+
+<p>
+Η εφαρμογή <strong>LiteraQuiz</strong> αναπτύσσεται και συντηρείται από τον
+<strong>Lector Nocturnus</strong>.
+</p>
+
+<h3>Ποια δεδομένα συλλέγονται</h3>
+
+<p>
+Η εφαρμογή μπορεί να αποθηκεύει στοιχεία όπως:
+</p>
+
+<ul>
+<li>Όνομα χρήστη (username)</li>
+<li>Στοιχεία προφίλ</li>
+<li>Avatar ή φωτογραφία προφίλ</li>
+<li>Σκορ και στατιστικά παιχνιδιού</li>
+</ul>
+
+<h3>Φωτογραφίες Προφίλ</h3>
+
+<p>
+Οι χρήστες μπορούν να επιλέξουν avatar ή να ανεβάσουν
+δική τους φωτογραφία προφίλ.
+</p>
+
+<p>
+Οι φωτογραφίες εμφανίζονται στο προφίλ
+και ενδέχεται να εμφανίζονται δημόσια
+στα leaderboards (Pantheon).
+</p>
+
+<p>
+Η αποστολή φωτογραφίας είναι προαιρετική
+και μπορεί να αφαιρεθεί οποιαδήποτε στιγμή.
+</p>
+
+<h3>Δημόσια εμφάνιση δεδομένων</h3>
+
+<p>
+Τα παρακάτω στοιχεία ενδέχεται να εμφανίζονται δημόσια:
+</p>
+
+<ul>
+<li>Username</li>
+<li>Avatar ή φωτογραφία</li>
+<li>Σκορ και ranking</li>
+</ul>
+
+<h3>Αποθήκευση δεδομένων</h3>
+
+<p>
+Η εφαρμογή χρησιμοποιεί υπηρεσίες της
+<strong>Firebase (Google)</strong>
+για αποθήκευση δεδομένων και λειτουργία
+leaderboards.
+</p>
+
+<h3>Διαφημίσεις</h3>
+
+<p>
+Η εφαρμογή ενδέχεται στο μέλλον
+να περιλαμβάνει διαφημίσεις.
+</p>
+
+<h3>Δικαιώματα χρήστη</h3>
+
+<p>
+Οι χρήστες μπορούν να ζητήσουν
+διόρθωση ή διαγραφή δεδομένων
+επικοινωνώντας στο:
+</p>
+
+<p>
+📧 support.literaquiz@gmail.com
+</p>
+
+<h3>Επικοινωνία</h3>
+
+<p>
+Developer: <strong>Lector Nocturnus</strong><br>
+Email: support.literaquiz@gmail.com
+</p>
+
+        </div>
+
+    </div>
+
+</div>  
+  
+<div id="terms-of-use-screen" class="screen" style="display:none;">
+
+    <h1 class="logo-text support-logo">
+        Όροι Χρήσης
+    </h1>
+
+    <div class="policy-container">
+
+        <div class="policy-text">
+
+            <p><strong>Τελευταία ενημέρωση:</strong> 2026</p>
+
+            <p>
+                Το <strong>LiteraQuiz</strong> είναι παιχνίδι γνώσεων λογοτεχνίας
+                που αναπτύσσεται από τον <strong>Lector Nocturnus</strong>.
+            </p>
+
+            <h3>Αποδοχή των Όρων</h3>
+            <p>
+                Με τη χρήση της εφαρμογής, ο χρήστης αποδέχεται τους παρόντες όρους.
+            </p>
+
+            <h3>Χρήση της Εφαρμογής</h3>
+            <p>
+                Ο χρήστης οφείλει να χρησιμοποιεί την εφαρμογή με νόμιμο
+                και θεμιτό τρόπο, χωρίς κατάχρηση ή προσπάθεια αλλοίωσης
+                των rankings και των λειτουργιών της.
+            </p>
+
+            <h3>Λογαριασμός και Προφίλ</h3>
+            <p>
+                Ο χρήστης είναι υπεύθυνος για τα στοιχεία που επιλέγει να εμφανίζει,
+                όπως username, avatar, φωτογραφία και στοιχεία προφίλ.
+            </p>
+
+            <h3>Φωτογραφίες και Περιεχόμενο Χρήστη</h3>
+            <p>
+                Αν ο χρήστης επιλέξει να ανεβάσει προσωπική φωτογραφία,
+                δηλώνει ότι έχει το δικαίωμα χρήσης της και ότι δεν παραβιάζει
+                δικαιώματα τρίτων.
+            </p>
+
+            <p>
+                Απαγορεύεται η αποστολή εικόνων ή περιεχομένου που είναι:
+            </p>
+
+            <ul>
+                <li>παράνομο ή προσβλητικό</li>
+                <li>παραπλανητικό ή ακατάλληλο</li>
+                <li>προσωπικό δεδομένο τρίτων χωρίς άδεια</li>
+            </ul>
+
+            <h3>Leaderboards και Pantheon</h3>
+            <p>
+                Η εφαρμογή μπορεί να εμφανίζει δημόσια usernames, avatars,
+                φωτογραφίες προφίλ, σκορ και άλλα στατιστικά,
+                στο πλαίσιο των leaderboards και του Pantheon.
+            </p>
+
+            <h3>Περιορισμός Ευθύνης</h3>
+            <p>
+                Η εφαρμογή παρέχεται “ως έχει”, χωρίς εγγύηση αδιάλειπτης
+                ή σφάλμα-free λειτουργίας.
+            </p>
+
+            <h3>Αλλαγές στους Όρους</h3>
+            <p>
+                Οι όροι αυτοί μπορεί να τροποποιούνται στο μέλλον.
+                Η συνέχιση της χρήσης της εφαρμογής σημαίνει αποδοχή των αλλαγών.
+            </p>
+
+            <h3>Επικοινωνία</h3>
+            <p>
+                Email: support.literaquiz@gmail.com<br>
+                Developer: <strong>Lector Nocturnus</strong>
+            </p>
+
+        </div>
+
+    </div>
+
+</div>  
+  
+<div id="profile-menu-screen" class="screen" style="display:none;">
+
+    <h1 class="logo-text support-logo">Το Προφίλ Μου</h1>
+    <p class="logo-sub support-sub">Προσωπικά στοιχεία και λογοτεχνικές προτιμήσεις</p>
+
+    <div class="avatar-box-profile">
+    <div class="avatar-circle-profile">
+        <img id="profile-avatar-img" src="assets/default-avatar.png" alt="Avatar">
+    </div>
+    <div class="avatar-profile-info">
+        <div class="profile-label-title">Τρέχον Avatar</div>
+        <div id="profile-avatar-name" class="profile-avatar-name">Όνομα Avatar</div>
+    </div>
+</div>
+
+<div class="profile-menu-list">
+
+    <div class="support-row">
+        <div class="support-circle red">
+            <img src="https://cdn.jsdelivr.net/gh/LiteraQuizMaster/literaquiz-assets@main/Profile/Change_Avatar.webp" alt="Αλλαγή Avatar">
+        </div>
+
+        <button class="menu-btn btn-red"
+                onclick="openAvatarFromProfile()">
+            Αλλαγή Avatar
+        </button>
+    </div>
+
+    <div class="support-row">
+        <div class="support-circle blue">
+            <img src="https://cdn.jsdelivr.net/gh/LiteraQuizMaster/literaquiz-assets@main/Profile/Picture.webp" alt="Φωτογραφία αντί Avatar">
+        </div>
+
+        <button class="menu-btn btn-blue"
+                onclick="openPhotoWarningModal()">
+            Φωτογραφία αντί Avatar
+        </button>
+    </div>
+
+    <div class="support-row">
+        <div class="support-circle yellow">
+            <img src="https://cdn.jsdelivr.net/gh/LiteraQuizMaster/literaquiz-assets@main/Profile/My_Profile.webp" alt="Επεξεργασία Προφίλ">
+        </div>
+
+        <button class="menu-btn btn-yellow"
+                onclick="profileFormReturnScreen='profile-menu-screen'; loadMyProfileData(); goToScreen('profile-form-screen')">
+            Επεξεργασία Προφίλ
+        </button>
+    </div>
+
+</div>
+
+</div>
+  
+<div id="profile-form-screen" class="screen" style="display:none;">
+
+    <h1 class="logo-text support-logo">Επεξεργασία Προφίλ</h1>
+    <p class="logo-sub support-sub">Συμπλήρωσε τα στοιχεία σου</p>
+
+    <div class="profile-form-box">
+
+        <div class="form-group">
+            <label>Ποιο είναι το όνομά σου;</label>
+            <input type="text" id="real-name-input" placeholder="π.χ. Αλέξανδρο ή Ελένη">
+        </div>
+
+        <div class="profile-mini-card card-blue">
+            <h3>Αγαπημένοι/ες πεζογράφοι (3)</h3>
+            <input type="text" class="profile-mini-input prose-input" placeholder="Πεζογράφος 1">
+            <input type="text" class="profile-mini-input prose-input" placeholder="Πεζογράφος 2">
+            <input type="text" class="profile-mini-input prose-input" placeholder="Πεζογράφος 3">
+        </div>
+
+        <div class="profile-mini-card card-green">
+            <h3>Αγαπημένοι/ες ποιητές/ποιήτριες (3)</h3>
+            <input type="text" class="profile-mini-input poet-input" placeholder="Ποιητής/Ποιήτρια 1">
+            <input type="text" class="profile-mini-input poet-input" placeholder="Ποιητής/Ποιήτρια 2">
+            <input type="text" class="profile-mini-input poet-input" placeholder="Ποιητής/Ποιήτρια 3">
+        </div>
+
+        <div class="profile-mini-card card-red">
+            <h3>Αγαπημένοι/ες θεατρικοί συγγραφείς (3)</h3>
+            <input type="text" class="profile-mini-input playwright-input" placeholder="Θεατρικός 1">
+            <input type="text" class="profile-mini-input playwright-input" placeholder="Θεατρικός 2">
+            <input type="text" class="profile-mini-input playwright-input" placeholder="Θεατρικός 3">
+        </div>
+
+       <div class="profile-mini-card card-orange">
+            <h3>Αγαπημένα βιβλία (5)</h3>
+            <input type="text" class="profile-mini-input book-input" placeholder="Βιβλίο 1">
+            <input type="text" class="profile-mini-input book-input" placeholder="Βιβλίο 2">
+            <input type="text" class="profile-mini-input book-input" placeholder="Βιβλίο 3">
+            <input type="text" class="profile-mini-input book-input" placeholder="Βιβλίο 4">
+            <input type="text" class="profile-mini-input book-input" placeholder="Βιβλίο 5">
+        </div>
+
+        <div class="profile-mini-card card-purple">
+            <h3>Αγαπημένοι/ες λογοτεχνικοί ήρωες/ηρωίδες</h3>
+            <input type="text" class="profile-mini-input hero-input" placeholder="Ήρωας/ηρωίδα 1">
+            <input type="text" class="profile-mini-input hero-input" placeholder="Ήρωας/ηρωίδα 2">
+            <input type="text" class="profile-mini-input hero-input" placeholder="Ήρωας/ηρωίδα 3">
+        </div>
+
+        <button class="menu-btn btn-green" onclick="saveMyProfileData()">
+            <span class="menu-emoji"></span>Αποθήκευση
+        </button>
+
+        <button class="menu-btn btn-red" onclick="goToScreen('profile-menu-screen')">
+            <span class="menu-emoji"></span>Πίσω
+        </button>
+
+    </div>
+
+</div>  
+  
+<div id="profile-card-preview-screen" class="screen" style="display:none;">
+
+    <h1 class="logo-text support-logo">Η Καρτέλα Σου</h1>
+    <p class="logo-sub support-sub">Έτσι θα φαίνεσαι στο Πάνθεον</p>
+
+    <div class="player-card-preview" id="player-card-preview">
+
+        <div class="player-card-top">
+            <div class="player-card-avatar-wrap">
+                <img id="preview-card-avatar" src="assets/default-avatar.png" alt="Player">
+            </div>
+
+            <div class="player-card-heading">
+                <div id="preview-card-realname" class="preview-card-realname">Πραγματικό Όνομα</div>
+                <div id="preview-card-username" class="preview-card-username">@username</div>
+                <div id="preview-card-rank" class="preview-card-rank">Βαθμίδα</div>
+            </div>
+        </div>
+
+        <div class="player-card-section">
+            <div class="player-card-section-title">Αγαπημένοι Πεζογράφοι</div>
+            <div id="preview-card-prose" class="player-card-tags"></div>
+        </div>
+
+        <div class="player-card-section">
+            <div class="player-card-section-title">Αγαπημένοι Ποιητές</div>
+            <div id="preview-card-poets" class="player-card-tags"></div>
+        </div>
+
+        <div class="player-card-section">
+            <div class="player-card-section-title">Αγαπημένοι Θεατρικοί Συγγραφείς</div>
+            <div id="preview-card-playwrights" class="player-card-tags"></div>
+        </div>
+
+        <div class="player-card-section">
+            <div class="player-card-section-title">Αγαπημένα Βιβλία</div>
+            <div id="preview-card-books" class="player-card-tags"></div>
+        </div>
+
+        <div class="player-card-section">
+            <div class="player-card-section-title">Αγαπημένοι Λογοτεχνικοί Ήρωες</div>
+            <div id="preview-card-heroes" class="player-card-tags"></div>
+        </div>
+
+    </div>
+
+    <div class="player-card-preview-actions">
+        <button class="menu-btn btn-red" onclick="goToScreen('profile-form-screen')">
+            <span class="menu-emoji">✏️</span>Επιστροφή για αλλαγές
+        </button>
+
+        <button class="menu-btn btn-green" onclick="finishProfilePreview()">
+            <span class="menu-emoji">✅</span>Ολοκλήρωση
+        </button>
+    </div>
+
+</div>
+  
+<div id="help-library-screen" class="screen" style="display:none;">
+
+<div class="help-library-container">
+
+    <!-- ======================= -->
+    <!-- ΒΟΗΘΕΙΕΣ ΤΑΞΗΣ -->
+    <!-- ======================= -->
+
+    <div class="help-section-box help-section-blue help-tab-content" data-tab="blue">
+        <h2 class="help-section-title">Βοήθειες Τάξης</h2>
+
+        <div class="help-item" data-help-id="class-prose">
+            <img src="https://i.ibb.co/Z1GBmy2M/Novelists.png" class="help-icon">
+            <div>
+                <div class="help-name">Το κάλπικο ζύγι</div>
+                <div class="help-desc">
+                    Αφαιρεί δύο λάθος επιλογές από τις πιθανές απαντήσεις.
+                </div>
+                <div class="help-unlock">
+                    Διαθέσιμη οταν ξεκλειδώσεις θρυλικό ή επικό πεζογράφο.
+                </div>
+                <div class="help-state-badge"></div>
+            </div>
+        </div>
+
+        <div class="help-item" data-help-id="class-poetry">
+            <img src="https://i.ibb.co/vxxSyBP6/Poets.png" class="help-icon">
+            <div>
+                <div class="help-name">Ποιητική Άδεια</div>
+                <div class="help-desc">
+                    Αν απαντήσεις λάθος, σου επιτρέπει να δοκιμάσεις δεύτερη επιλογή.
+                </div>
+                <div class="help-unlock">
+                    Διαθέσιμη οταν ξεκλειδώσεις θρυλικό ή επικό ποιητή.
+                </div>
+                <div class="help-state-badge"></div>
+            </div>
+        </div>
+
+        <div class="help-item" data-help-id="class-theatre">
+            <img src="https://i.ibb.co/YTYkmzCv/Time-Freeze.png" class="help-icon">
+            <div>
+                <div class="help-name">Από μηχανής Θεός</div>
+                <div class="help-desc">
+                    Παγώνει τον χρόνο για λίγα δευτερόλεπτα.
+                </div>
+                <div class="help-unlock">
+                    Διαθέσιμη οταν ξεκλειδώσεις θρυλικό ή επικό θεατρικό συγγραφέα.
+                </div>
+                <div class="help-state-badge"></div>
+            </div>
+        </div>
+
+        <div class="help-item" data-help-id="class-heroes">
+            <img src="https://i.ibb.co/Q3mPCQ9t/Heroes.png" class="help-icon">
+            <div>
+                <div class="help-name">Το τσεκούρι του Ρασκόλνικοφ</div>
+                <div class="help-desc">
+                    Διπλασιάζει τους πόντους για σύντομο χρονικό διάστημα.
+                </div>
+                <div class="help-unlock">
+                    Διαθέσιμη οταν ξεκλειδώσεις θρυλικό ή επικό λογοτεχνικό ηρώα.
+                </div>
+                <div class="help-state-badge"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ======================= -->
+    <!-- ΒΟΗΘΕΙΕΣ ΣΧΟΛΗΣ -->
+    <!-- ======================= -->
+
+    <div class="help-section-box help-section-yellow help-tab-content" data-tab="yellow" style="display:none;">
+        <h2 class="help-section-title">Βοήθειες Σχολής</h2>
+
+        <div class="help-item" data-help-id="school-goethe">
+            <img src="https://i.ibb.co/DgmLPP1g/Male-Shield.png" class="help-icon">
+            <div>
+                <div class="help-name">Η ασπίδα του Δον Κιχώτη</div>
+                <div class="help-desc">
+                    Απορροφά δύο λάθος απαντήσεις πριν σπάσει εντελώς.
+                </div>
+                <div class="help-unlock">
+                    Ξεκλειδώνει επιλέγοντας το Ινστιτούτο του Γκαίτε.
+                </div>
+                <div class="help-state-badge"></div>
+            </div>
+        </div>
+
+        <div class="help-item" data-help-id="school-sappho">
+            <img src="https://i.ibb.co/x8cGB75X/Female-Sandglass.png" class="help-icon">
+            <div>
+                <div class="help-name">Αναζητώντας τον χαμένο χρόνο</div>
+                <div class="help-desc">
+                    Προσθέτει 15 δευτερόλεπτα στο παιχνίδι.
+                </div>
+                <div class="help-unlock">
+                    Ξεκλειδώνει επιλέγοντας τη Σχολή της Σαπφούς.
+                </div>
+                <div class="help-state-badge"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ======================= -->
+    <!-- ΒΟΗΘΕΙΕΣ ΒΑΘΜΙΔΑΣ -->
+    <!-- ======================= -->
+
+    <div class="help-section-box help-section-green help-tab-content" data-tab="green" style="display:none;">
+        <h2 class="help-section-title">Βοήθειες Βαθμίδας</h2>
+
+        <div class="help-item" data-help-id="rank-proto">
+            <img src="https://i.ibb.co/3yDPgMdR/Heart-Saga.png" class="help-icon">
+            <div>
+                <div class="help-name">Έπος Καρδίας</div>
+                <div class="help-desc">
+                    Αλλάζει την τρέχουσα ερώτηση χωρίς να χάνεις βαθμό
+                    και τη μετατρέπει σε εύκολη δοκιμασία.
+                </div>
+                <div class="help-unlock">
+                    Ξεκλειδώνει στη βαθμίδα Πρωτορήτορας.
+                </div>
+                <div class="help-state-badge"></div>
+            </div>
+        </div>
+
+        <div class="help-item" data-help-id="rank-magistros">
+            <img src="https://i.ibb.co/XxcKkjKX/All-Seeing-Eye.png" class="help-icon">
+            <div>
+                <div class="help-name">Ο Μεγάλος Αδερφός</div>
+                <div class="help-desc">
+                    Φωτίζει τη σωστή απάντηση με έντονο πράσινο περίγραμμα.
+                </div>
+                <div class="help-unlock">
+                    Ξεκλειδώνει στη βαθμίδα Μέγας Μάγιστρος.
+                </div>
+                <div class="help-state-badge"></div>
+            </div>
+        </div>
+
+        <div class="help-item" data-help-id="rank-dragon">
+            <img src="https://i.ibb.co/4ZCxXBXZ/Great-Dragon.png" class="help-icon">
+            <div>
+                <div class="help-name">Η Φωνή του Δράκου</div>
+                <div class="help-desc">
+                    Φωτίζει τη σωστή απάντηση με χρυσή λάμψη
+                    και ενεργοποιεί Bonus ερώτηση.
+                </div>
+                <div class="help-unlock">
+                    Ξεκλειδώνει στη βαθμίδα Μέγας Δράκος.
+                </div>
+                <div class="help-state-badge"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ======================= -->
+    <!-- ΕΙΔΙΚΗ -->
+    <!-- ======================= -->
+
+    <div class="help-section-box help-section-red help-tab-content" data-tab="red" style="display:none;">
+        <h2 class="help-section-title">Ειδική Βοήθεια</h2>
+
+        <div class="help-item" data-help-id="special-refresh">
+            <img src="https://i.ibb.co/209HMG3H/Chat-GPT-Image-15-2026-11-36-20.png" class="help-icon">
+            <div>
+                <div class="help-name">Ο κύκλος του Σιντάρτα</div>
+                <div class="help-desc">
+                    Επαναφέρει βοήθειες που έχουν ήδη χρησιμοποιηθεί μέσα στην παρτίδα.
+                </div>
+                <div class="help-unlock">
+                    Ξεκλειδώνει όταν ολοκληρωθεί πλήρως το προφίλ παίκτη.
+                </div>
+                <div class="help-state-badge"></div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+</div>
+  
+
+<!-- =========================================================
+     GLOBAL MODALS / OVERLAYS
+========================================================= -->
+
+<div id="avatar-help-unlocked-modal" class="modal-overlay is-hidden">
+    <div class="coffee-modal-content">
+        <h2>🔓 Νέα Βοήθεια!</h2>
+
+        <p id="avatar-help-unlocked-message"></p>
+
+        <button class="menu-btn btn-purple" onclick="closeAvatarHelpUnlockedModal()">
+            Τέλεια!
+        </button>
+    </div>
+</div>
+
+<div id="delete-account-modal" class="modal is-hidden">
+<div class="modal-content">
+<h3>Διαγραφή Λογαριασμού</h3>
+<p>Επιθυμείς όντως να διαγράψεις τέτοιον σπουδαίο λογαριασμό;</p>
+<button class="main-btn delete-btn" onclick="confirmDeleteAccount()">Ναι, διαγραφή</button>
+<button class="main-btn" onclick="closeDeleteAccountModal()">Άκυρο</button>
+</div>
+</div>
+  
+    <div id="support-form-screen" class="screen" style="display:none;">   
+      
+        <h2 id="support-title" class="support-form-title"></h2>
+        <div class="form-group">
+            <label>Όνομα (Προαιρετικό)</label>
+            <input type="text" id="sup-name" placeholder="Το όνομά σας...">
+        </div>
+        <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="sup-email" placeholder="Το email σας...">
+        </div>
+        <div class="form-group">
+            <label id="sup-msg-label"></label>
+            <textarea id="sup-message" rows="4" placeholder="Γράψτε εδώ..."></textarea>
+        </div>
+        <button class="main-btn btn-submit-support" onclick="submitSupport()">Υποβολή</button>
+
+</div>
+
+<!-- WEEKLY CHALLENGE GAME SCREEN -->
+<div id="weekly-challenge-game-screen" class="screen" style="display:none;">
+
+    <div id="wc-clues-container"></div>
+
+    <div id="wc-unlock-section" style="margin-bottom:16px; display:none;">
+        <button onclick="unlockNextClue()" class="menu-btn btn-blue" style="font-size:0.9rem; display:flex; flex-direction:column; align-items:center; gap:4px; padding:12px;">
+            <span>+ Ξεκλείδωσε επόμενο στοιχείο</span>
+            <span style="font-size:0.72rem; opacity:0.8;">-50 pts / -25 περγαμηνές</span>
+        </button>
+    </div>
+
+    <div id="wc-unlock-locked-msg" style="display:none; text-align:center; font-size:0.82rem; opacity:0.6; margin-bottom:16px; padding:10px; border:1px dashed rgba(255,255,255,0.2); border-radius:12px;"></div>
+
+    <div style="border-top:1px solid rgba(255,255,255,0.1); padding-top:14px; margin-top:8px;">
+        <p style="font-size:0.8rem; opacity:0.5; text-align:center; margin-bottom:10px;">
+            Προσπάθειες που απομένουν: <strong id="wc-attempts-display">4</strong>
+        </p>
+
+        <input type="text" id="wc-answer-input"
+               placeholder="Πληκτρολόγησε την απάντηση..."
+               class="wc-input">
+
+        <div id="wc-solved-banner" style="display:none; background:linear-gradient(135deg,#27ae60,#1e8449); border-radius:40px; padding:14px; text-align:center; color:white; font-weight:bold; font-size:1rem; margin-bottom:10px;">
+            ✓ Συγχαρητήρια! Έχετε λύσει τον γρίφο!
+        </div>
+
+        <div id="wc-blocked-banner" style="display:none; background:linear-gradient(135deg,#c0392b,#922b21); border-radius:40px; padding:14px; text-align:center; color:white; font-weight:bold; font-size:1rem; margin-bottom:10px;">
+            ✕ Δεν έχετε άλλες προσπάθειες!
+        </div>
+
+        <button class="menu-btn btn-green" onclick="submitWeeklyChallengeAnswer()">
+            Υποβολή Απάντησης
+        </button>
+    </div>
+
+    <div id="wc-answers-history" style="display:none; margin-top:16px;">
+        <p style="font-size:0.75rem; opacity:0.5; margin-bottom:8px;">Απαντήσεις που έχεις δώσει:</p>
+        <div id="wc-answers-list"></div>
+    </div>
+
+</div>
+
+<!-- WEEKLY CHALLENGE SCORES SCREEN -->
+<div id="wc-scores-screen" class="screen" style="display:none;">
+
+    <div style="display:flex; gap:8px; margin-bottom:14px;">
+        <button id="wc-btn-year" onclick="wcTogglePicker('year')" style="
+            flex:1; padding:10px 12px; border-radius:40px;
+            background:linear-gradient(180deg,#9b59b6,#6c3483);
+            border:none; color:white; font-family:inherit;
+            font-size:0.85rem; cursor:pointer; text-align:center;
+            display:flex; align-items:center; justify-content:center; gap:6px;
+            white-space:nowrap; overflow:hidden;">
+            <span id="wc-btn-year-label">—</span><span style="font-size:0.6rem; opacity:0.8;">▼</span>
+        </button>
+        <button id="wc-btn-month" onclick="wcTogglePicker('month')" style="
+            flex:1; padding:10px 12px; border-radius:40px;
+            background:linear-gradient(180deg,#3498db,#1f47b8);
+            border:none; color:white; font-family:inherit;
+            font-size:0.85rem; cursor:pointer; text-align:center;
+            display:flex; align-items:center; justify-content:center; gap:6px;
+            white-space:nowrap; overflow:hidden;">
+            <span id="wc-btn-month-label">—</span><span style="font-size:0.6rem; opacity:0.8;">▼</span>
+        </button>
+        <button id="wc-btn-week" onclick="wcTogglePicker('week')" style="
+            flex:1; padding:10px 8px; border-radius:40px;
+            background:linear-gradient(180deg,#27ae60,#1e8449);
+            border:none; color:white; font-family:inherit;
+            font-size:0.78rem; cursor:pointer; text-align:center;
+            display:flex; align-items:center; justify-content:center; gap:6px;
+            white-space:nowrap; overflow:hidden;">
+            <span id="wc-btn-week-label">—</span><span style="font-size:0.6rem; opacity:0.8;">▼</span>
+        </button>
+    </div>
+
+    <div id="wc-scores-list">
+        <p style="text-align:center; opacity:0.5; font-size:0.85rem;">Φόρτωση...</p>
+    </div>
+
+</div>
+
+</div><!-- end app-container -->
+
+
+
+
+  
+  <div id="confirm-modal" class="modal-overlay is-hidden">
+    <div class="modal-content">
+        <p>Επιθυμείτε σίγουρα να εγκαταλείψετε το παιχνίδι;</p>
+        <div class="modal-buttons">
+            <button onclick="closeConfirmModal()" class="btn-resume">Συνέχεια</button>
+            <button onclick="forceExit()" class="btn-exit">Έξοδος</button>
+        </div>
+    </div>
+</div>
+ 
+<div id="initiation-modal" class="modal-overlay">
+    <div class="modal-box initiation-box">
+        <div class="modal-title">🔒 Κλειδωμένο Δωμάτιο</div>
+        <div class="modal-message">
+            Αυτό το δωμάτιο είναι διαθέσιμο<br>μόνο για όσους έχουν μυηθεί ολοκληρωτικά<br>στον κόσμο του LiteraQuiz<br>(Login με Google account).
+        </div>
+        <button class="menu-btn btn-blue" onclick="closeInitiationModal()">Κατάλαβα</button>
+    </div>
+</div>
+
+<div id="reset-progress-modal" class="modal-overlay">
+
+    <div class="modal-content">
+
+        <div class="modal-title">
+            Επαναφορά Προόδου
+        </div>
+
+        <div class="modal-text">
+            Θέλεις σίγουρα να γίνει επαναφορά της προόδου σου;
+            <br><br>
+
+            Θα χαθούν:
+            <br>
+            • όλα τα σκορ  
+            • οι περγαμηνές  
+            • τα ξεκλειδωμένα avatars  
+            • τα Perfect 10  
+
+            <br><br>
+
+            Θα παραμείνουν:
+            <br>
+            • το προφίλ σου  
+            • το avatar σου  
+            • η σχολή σου  
+
+        </div>
+
+        <div class="modal-buttons">
+
+            <button class="menu-btn btn-red"
+                    onclick="confirmResetProgress()">
+                Επαναφορά
+            </button>
+
+            <button class="menu-btn btn-blue"
+                    onclick="closeResetProgressModal()">
+                Ακύρωση
+            </button>
+
+        </div>
+
+    </div>
+
+</div> 
+  
+  <div id="reset-success-modal" class="modal-overlay">
+
+    <div class="modal-content success-modal">
+
+        <div class="modal-title">
+            Επαναφορά Ολοκληρώθηκε
+        </div>
+
+        <div class="modal-text">
+            Η πρόοδός σου επαναφέρθηκε επιτυχώς.
+        </div>
+
+        <div class="modal-buttons">
+
+            <button class="menu-btn btn-green"
+                    onclick="closeResetSuccessModal()">
+                Εντάξει
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+  <div id="exit-app-modal" class="modal-overlay is-hidden">
+    <div class="modal-content timeattack-intro-box" style="text-align:center;">
+        <h2>Έξοδος</h2>
+        <p>Είστε σίγουροι ότι θέλετε να κλείσετε την εφαρμογή;</p>
+        <button onclick="terminateApp()" class="menu-btn btn-red" style="margin-bottom:10px;">Είμαι σίγουρος</button>
+        <button onclick="closeExitAppModal()" class="menu-btn btn-green">Συνέχεια στο παιχνίδι</button>
+    </div>
+</div>
+
+<div id="update-modal" class="modal" style="display:none;">
+    <div class="modal-content timeattack-intro-box" style="text-align:center;">
+        <h2 id="update-modal-title">Ενημερώσεις</h2>
+        <p id="update-modal-text">Η εφαρμογή είναι ήδη ενημερωμένη.</p>
+
+        <button class="menu-btn btn-yellow"
+                id="update-modal-action"
+                style="display:none; padding:12px; font-size:0.9rem; margin-bottom:10px;">
+            Ενημέρωση
+        </button>
+
+        <button class="menu-btn btn-red"
+                onclick="closeUpdateModal()"
+                style="padding:12px; font-size:0.9rem;">
+            Πίσω
+        </button>
+    </div>
+</div>
+
+<div id="photo-warning-modal" class="modal" style="display:none;">
+    <div class="modal-content bonus-modal-content">
+        <h3 class="bonus-modal-title">Φωτογραφία αντί Avatar</h3>
+        <p class="bonus-question-text">
+            Όποιος επιλέγει τη δική του όψη, απαρνείται τις δυνάμεις των μεγάλων μυστών της λογοτεχνίας.
+        </p>
+        <div class="modal-buttons">
+            <button class="footer-btn confirm-green active" onclick="triggerPhotoUpload()">Συνέχεια</button>
+            <button class="footer-btn back-red" onclick="closePhotoWarningModal()">Άκυρο</button>
+        </div>
+    </div>
+</div>  
+
+  <input type="file" id="photo-upload-input" accept="image/*" style="display:none;">
+  
+<div id="thanks-modal" class="modal-overlay is-hidden">
+    <div class="modal-content">
+        
+        <div id="msg-new-q" style="display:none;">
+            <p>Σας ευχαριστούμε!<br>
+            Η ερώτηση θα ελεγχθεί ως προς την ορθότητα<br>
+            και θα ενσωματωθεί στο παιχνίδι!</p>
+        </div>
+
+        <div id="msg-error-report" style="display:none;">
+            <p>Ευχαριστούμε για την ανατροφοδότηση!<br>
+            Το αίτημά σας θα ελεγχθεί, ώστε να προβούμε στις<br>
+            απαραίτητες ενέργειες για τη βελτίωση του παιχνιδιού.</p>
+        </div>
+
+        <div class="modal-buttons">
+            <button onclick="closeThanksModal()" class="btn-resume">Συνέχεια</button>
+        </div>
+    </div>
+</div>  
+<div id="validation-modal" class="modal-overlay is-hidden">
+    <div class="modal-content modal-content-danger"><p id="validation-message">Παρακαλώ συμπληρώστε όλα <br>τα απαραίτητα πεδία!</p>
+        <div class="modal-buttons">
+            <button onclick="closeValidationModal()" class="btn-resume">Συνέχεια</button>
+        </div>
+    </div>
+</div>
+
+<div id="delete-success-modal" class="modal is-hidden">
+    <div class="modal-content bonus-modal-content">
+        <h3 class="bonus-modal-title">Ο λογαριασμός σας διαγράφηκε με επιτυχία!</h3>
+    </div>
+</div> 
+  
+<div id="logout-modal" class="modal-overlay is-hidden">
+    <div class="modal-content">
+        <p>Επιθυμείτε σίγουρα να αποσυνδεθείτε από το LiteraQuiz;</p>
+        <div class="modal-buttons">
+            <button onclick="closeLogoutModal()" class="btn-resume">Παραμονή</button>
+            <button onclick="confirmLogout()" class="btn-exit">Αποσύνδεση</button>
+        </div>
+    </div>
+</div>
+  
+<div id="password-warning-modal" class="modal-overlay is-hidden">
+    <div class="modal-content modal-content-warning"><p>Για να καταγραφεί <br>το σκορ σας <br>στο <strong>Global Ranking</strong> παρακαλώ <br>συνδεθείτε μέσω Google <br> ή <br> δημιουργήστε λογαριασμό <br>με <strong>μοναδικό ψευδώνυμο</strong> και <strong>κωδικό</strong>.</p>
+        <div class="modal-buttons">
+            <button onclick="proceedWithoutPassword()" class="btn-resume btn-warning-continue">Συνέχεια ως Επισκέπτης</button>
+            <button onclick="closePasswordWarning()" class="btn-exit">Επιστροφή</button>
+        </div>
+    </div>
+</div>
+  
+<div id="bonus-question-modal" class="modal is-hidden">
+<div class="modal-content bonus-modal-content">
+<h3 class="bonus-modal-title">Ερώτηση Bonus</h3>
+<p id="bonus-question-text" class="bonus-question-text"></p>
+<div id="bonus-question-options" class="bonus-question-options"></div>
+<div class="bonus-reward-box">🎁 +100 βαθμοί • +15 <img src='assets/rank_goals/Pergamenas.webp' style='width:16px;height:16px;vertical-align:middle;'></div>
+</div>
+</div>  
+  
+<div id="google-username-modal" class="modal is-hidden">
+
+  <div class="modal-content">
+
+    <h3>Επίλεξε όνομα παίκτη</h3>
+    <p>
+      Πώς θέλεις να εμφανίζεσαι στο LiteraQuiz;
+    </p>
+    <input
+      type="text"
+      id="google-username-input"
+      placeholder="Γράψε ψευδώνυμο"
+      class="login-input"
+      maxlength="13">
+    <button
+      class="main-btn"
+      onclick="confirmGoogleUsername()"
+    >Επιβεβαίωση</button>
+    <button class="main-btn exit-btn" onclick="cancelGoogleUsername()">Έξοδος</button>
+  </div>
+  
+</div>
+  
+  <div id="unlock-avatar-modal" class="modal is-hidden">
+<div class="modal-content">
+<p id="unlock-avatar-message"></p>
+<div class="modal-buttons">
+<button class="footer-btn confirm-green active" onclick="confirmUnlockAvatar()">Ναι</button>
+<button class="footer-btn back-red" onclick="closeUnlockAvatarModal()">Όχι</button>
+</div>
+</div>
+</div>
+
+<div id="rank-up-modal" class="modal is-hidden">
+    <div class="modal-content bonus-modal-content rankup-modal-content">
+        <h3 class="bonus-modal-title">Νέα Βαθμίδα!</h3>
+        <p id="rank-up-text" class="bonus-question-text"></p>
+        <div class="rankup-transition-wrap">
+            <div class="bonus-reward-box rankup-old-box" id="rank-up-old-badge"></div>
+            <div class="rankup-arrow">↓</div>
+            <div class="bonus-reward-box rankup-new-box" id="rank-up-new-badge"></div>
+        </div>
+        <div id="rank-up-unlock" class="rank-up-unlock-text"></div>
+        <div class="modal-buttons">
+            <button class="footer-btn confirm-green active" onclick="closeRankUpModal()">Συνέχεια</button>
+        </div>
+    </div>
+</div>
+
+<div id="timeattack-intro-modal" class="modal" style="display:none;">
+    <div class="modal-content timeattack-intro-box">
+
+        <h2>Time Attack</h2>
+
+        <p>
+            ⏳Έχεις <strong>45 δευτερόλεπτα</strong>.
+            <br>🟢Κάθε σωστή απάντηση δίνει πόντους και χρόνο.
+            <br>🔴Κάθε λάθος απάντηση αφαιρεί χρόνο.
+        </p>
+
+        <p>
+            🔥Το <strong>σερί σωστών απαντήσεων</strong> 
+            <br>αυξάνει την ανταμοιβή σου και 
+            <br>σε οδηγεί στην <strong>bonus ερώτηση</strong> 
+            <br>των extra πόντων.
+            <br>🧗‍♀️Όσο αντέχεις, τόσο ανεβαίνει η δυσκολία.
+        </p>
+
+<button class="ta-btn ta-start" onclick="startTimeAttackAfterIntro()">
+    Έναρξη
+</button>
+
+<button class="ta-btn ta-back" onclick="closeTimeAttackIntroToMode()">
+    Πίσω
+</button>
+
+    </div>
+</div>
+
+<div id="weekly-challenge-intro-modal" class="modal" style="display:none;">
+    <div class="modal-content timeattack-intro-box">
+
+        <div style="display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:8px;">
+            <h2 style="margin:0; color:var(--gold);">Εβδομαδιαίος Γρίφος</h2>
+        </div>
+
+        <div id="wc-loading" style="text-align:center; padding:16px; opacity:0.6;">
+            <p>Φόρτωση...</p>
+        </div>
+
+        <div id="wc-intro-content" style="display:none;">
+
+            <p style="font-size:0.8rem; opacity:0.8; margin-bottom:4px; display:flex; align-items:center; justify-content:center; gap:6px;">
+                <img src="assets/weekly_challenge/Calendar.webp" style="width:48px; height:48px; object-fit:contain;">
+                <span id="wc-intro-date-text"></span>
+            </p>
+
+            <p>
+                Αυτή την εβδομάδα αναζητούμε...<br>
+                <strong id="wc-intro-prompt"></strong>
+            </p>
+
+            <div style="border-top:1px solid rgba(255,255,255,0.15); margin:10px 0;"></div>
+
+            <p style="display:flex; align-items:flex-start; gap:8px; text-align:left;">
+                <img src="assets/weekly_challenge/Clue_0.webp" style="width:72px; height:72px; object-fit:contain; flex-shrink:0; margin-top:2px;">
+                <span><strong>Αρχικό στοιχείο:</strong><br>
+                <span id="wc-intro-clue0" style="font-size:0.9rem; opacity:0.85;"></span></span>
+            </p>
+
+            <div style="border-top:1px solid rgba(255,255,255,0.15); margin:10px 0;"></div>
+
+            <p style="font-size:0.85rem;">
+                <img src="assets/rank_goals/Points.webp" class="wc-reward-icon"> <strong id="wc-intro-pts">700</strong> πόντοι &nbsp;|&nbsp;
+                <img src="assets/rank_goals/Pergamenas.webp" class="wc-reward-icon"> <strong id="wc-intro-perg">350</strong> περγαμηνές<br>
+                <span style="font-size:0.75rem; opacity:0.5;">Κάθε επιπλέον clue αφαιρεί 50 pts και 25 περγαμηνές</span>
+            </p>
+
+            <p id="wc-attempts-left" style="font-size:0.85rem; color:#e74c3c; font-weight:bold;"></p>
+
+            <p style="font-size:0.72rem; opacity:0.5; font-style:italic; line-height:1.4;">
+                💡 Συμβουλή: Γράψτε τη λύση του Γρίφου στα αγγλικά ή στα ελληνικά, με σωστή ορθογραφία και τονισμό.
+            </p>
+
+        </div>
+
+        <button id="wc-start-btn" class="menu-btn btn-green" onclick="openWeeklyChallengeGame()" style="display:none; padding:10px; font-size:0.95rem;">
+            Ξεκινάμε!
+        </button>
+
+        <button class="menu-btn btn-red" onclick="closeWeeklyChallengeIntro()" style="padding:10px; font-size:0.95rem;">
+            Κλείσιμο
+        </button>
+
+    </div>
+</div>
+
+
+<div id="wc-correct-modal" class="modal" style="display:none;">
+    <div class="modal-content timeattack-intro-box" style="text-align:center;">
+        <h2 style="color:var(--gold);">Συγχαρητήρια!</h2>
+        <p>Βρήκες τον Εβδομαδιαίο Γρίφο! 🎉</p>
+        <p style="font-size:1.1rem;">
+            <img src="assets/rank_goals/Points.webp" class="wc-reward-icon"> +<strong id="wc-correct-pts">700</strong> πόντοι<br>
+            <img src="assets/rank_goals/Pergamenas.webp" class="wc-reward-icon"> +<strong id="wc-correct-perg">350</strong> περγαμηνές
+        </p>
+        <button class="menu-btn btn-green" onclick="closeWCCorrectModal()">Τέλεια!</button>
+    </div>
+</div>
+
+<!-- WC WRONG MODAL -->
+<div id="wc-wrong-modal" class="modal" style="display:none;">
+    <div class="modal-content timeattack-intro-box" style="text-align:center;">
+        <h2 style="color:#e74c3c;">Λάθος απάντηση!</h2>
+        <p>Δοκίμασε ξανά...<br>
+        Απομένουν <strong id="wc-wrong-remaining">3</strong> προσπάθειες.</p>
+        <p id="wc-wrong-warning" style="color:#e74c3c; font-size:0.85rem; display:none;">
+            ⚠️ Τελευταία προσπάθεια!
+        </p>
+        <button class="menu-btn btn-blue" onclick="closeWCWrongModal()">Συνέχεια</button>
+    </div>
+</div>
+
+<!-- WC BLOCKED MODAL -->
+<div id="wc-blocked-modal" class="modal" style="display:none;">
+    <div class="modal-content timeattack-intro-box" style="text-align:center;">
+        <img src="assets/weekly_challenge/Blocked_Challenge.webp" style="width:72px;height:72px;object-fit:contain;margin:0 auto 12px;">
+        <h2 style="color:#e74c3c;">Ο Γρίφος Κλείδωσε!</h2>
+        <p>Εξάντλησες τις προσπάθειές σου.<br>Θα επιστρέψεις την επόμενη εβδομάδα!</p>
+        <button class="menu-btn btn-red" onclick="closeWCBlockedModal()">Κλείσιμο</button>
+    </div>
+</div>
+<div id="donate-modal" class="modal-overlay" style="display:none;">
+<div class="modal-content">
+<h2>Υποστηρίξτε το LiteraQuiz</h2>
+<p>Αν απολαμβάνετε το παιχνίδι και θέλετε
+να βοηθήσετε στην ανάπτυξή του,
+μπορείτε να μας στηρίξετε με έναν από τους παρακάτω τρόπους.</p>
+<button class="menu-btn btn-yellow" style="padding:12px; font-size:0.9rem;" onclick="openCoffeeModal()">☕ BuyMeACoffee</button>
+<button class="menu-btn btn-purple" style="padding:12px; font-size:0.9rem;" onclick="openRevolutModal()">💳 Revolut</button>
+<button class="menu-btn btn-red" style="padding:12px; font-size:0.9rem;" onclick="closeDonateModal()">Κλείσιμο</button>
+</div>
+</div>
+
+<div id="coffee-modal" class="modal-overlay is-hidden">
+
+    <div class="modal-content coffee-modal-content">
+
+        <h2>☕ Στήριξε το LiteraQuiz</h2>
+
+        <p class="coffee-modal-text">
+            Αν σου αρέσει το LiteraQuiz, μπορείς να το στηρίξεις με έναν καφέ.
+            Κάθε στήριξη βοηθά στην ανάπτυξη του παιχνιδιού.
+        </p>
+
+        <!-- QR -->
+
+        <img
+            src="assets/bmc_qr.webp"
+            class="coffee-qr"
+            alt="Buy Me a Coffee QR">
+
+        <!-- CLICKABLE LINK ΚΑΤΩ ΑΠΟ QR -->
+
+        <a
+            href="https://buymeacoffee.com/LectorNocturnus"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="coffee-link-clickable"
+            onclick="playClick()">
+
+            buymeacoffee.com/LectorNocturnus
+
+        </a>
+
+        <!-- Κουμπί -->
+
+        <button class="menu-btn btn-yellow" onclick="openBuyMeACoffee()">
+            Άνοιγμα BuyMeACoffee
+        </button>
+
+        <button class="menu-btn btn-red" onclick="closeCoffeeModal()">
+            Πίσω
+        </button>
+
+    </div>
+
+</div>
+
+<!-- ===============================
+     REVOLUT MODAL
+================================ -->
+
+<div id="revolut-modal" class="modal-overlay is-hidden">
+    <div class="modal-content coffee-modal-content">
+
+        <h2>💳 Στήριξε το LiteraQuiz</h2>
+
+        <p class="coffee-modal-text">
+            Αν σου αρέσει το LiteraQuiz, μπορείς να το στηρίξεις μέσω Revolut.
+            Κάθε στήριξη βοηθά στην ανάπτυξη του παιχνιδιού.
+        </p>
+
+        <img
+            src="https://cdn.jsdelivr.net/gh/LiteraQuizMaster/literaquiz-assets@main/revolut_qr.webp"
+            class="coffee-qr"
+            alt="Revolut QR">
+
+        <a
+            href="https://revolut.me/cg_eleftheriadis"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="coffee-link-clickable"
+            onclick="playClick()">
+            revolut.me/cg_eleftheriadis
+        </a>
+
+        <button class="menu-btn btn-red" onclick="closeRevolutModal()">
+            Πίσω
+        </button>
+
+    </div>
+</div>
+
+<!-- ===============================
+     FINISH REVIEW MODAL
+================================ -->
+
+<div id="finish-review-modal" class="finish-review-modal">
+
+  <div class="finish-review-box">
+
+    <div id="finish-review-loading"
+         class="finish-review-loading">
+
+      <img src='assets/rank_goals/Pergamenas.webp' style='width:16px;height:16px;vertical-align:middle;'> Διορθώνουμε το γραπτό σου...
+
+    </div>
+
+    <div id="finish-review-result-wrap"
+         class="finish-review-result-wrap">
+
+      <div class="finish-review-title">
+        Το γραπτό σου διορθώθηκε
+      </div>
+
+      <div class="finish-review-intro">
+        Τα αποτελέσματά σου έχουν ως εξής:
+      </div>
+
+      <div id="finish-review-stats"
+           class="finish-review-stats">
+      </div>
+
+      <div id="finish-review-result-text"
+           class="finish-review-result">
+      </div>
+
+      <button
+        id="finish-review-btn"
+        class="finish-review-btn"
+        onclick="continueToFinishSummary()">
+
+        Ευχαριστώ! Δείξε μου την ανασκόπηση!
+
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+<div id="challenge-soon-modal" class="modal" style="display:none;">
+    <div class="modal-content timeattack-intro-box" style="text-align:center;">
+        <h2>Σύντομα!</h2>
+        <p>Αυτή η πρόκληση είναι υπό κατασκευή.<br>Θα είναι σύντομα διαθέσιμη!</p>
+        <button class="ta-btn ta-back" onclick="closeChallengeSoonModal()">Κλείσιμο</button>
+    </div>
+</div>
+
+<div id="donate-soon-modal" class="modal-overlay" style="display:none;">
+<div class="modal-content">
+<h2>Υποστήριξη</h2>
+<p>Η υπηρεσία σύντομα κοντά σας.</p>
+<button class="back-btn" onclick="closeDonateSoonModal()">Κλείσιμο</button>
+</div>
+</div>
+
+
+
+<!-- =========================================================
+     APP INFO MODAL
+========================================================= -->
+
+<div id="app-info-modal" class="modal" style="display:none;">
+
+    <div class="modal-content">
+
+        <h2>Πληροφορίες εφαρμογής</h2>
+
+        <div class="app-info-list">
+
+            <p><strong>LiteraQuiz</strong></p>
+
+            <p>
+                Έκδοση:
+                <span id="app-version-info">-</span>
+            </p>
+
+            <p>
+                Συσκευή:
+                <span id="app-device-info">-</span>
+            </p>
+
+            <p>
+                Browser:
+                <span id="app-browser-info">-</span>
+            </p>
+
+            <p>
+                Κατάσταση εφαρμογής:
+                <span id="app-install-info">-</span>
+            </p>
+
+            <p style="margin-top:14px;">
+                © 2026 LiteraQuiz
+            </p>
+
+        </div>
+
+        <button class="menu-btn btn-red"
+                style="padding:12px; font-size:0.9rem;"
+                onclick="closeAppInfoModal()">
+            Κλείσιμο
+        </button>
+
+    </div>
+
+</div>
+
+<!-- =========================================================
+     PERSISTENT HEADER
+========================================================= -->
+<div id="global-header" class="global-header" style="display:none;">
+    <div class="start-header-section profile-clickable" onclick="openRankInfoScreen()">
+        <p class="start-app-label">literaquiz</p>
+        <div class="user-profile-header">
+            <div class="profile-avatar-box"
+                onclick="event.stopPropagation(); openAvatarFromStart();">
+                <img id="display-avatar-img"
+                     src="assets/default-avatar.png"
+                     alt="Player Avatar">
+            </div>
+            <div class="profile-text-box">
+                <div id="display-player-name" class="gold-name">ΟΝΟΜΑ ΠΑΙΚΤΗ</div>
+                <div id="display-player-rank" class="player-rank">Μαθητευόμενος αναγνώστης</div>
+                <div id="display-avatar-role" class="sub-name">Όνομα Avatar</div>
+            </div>
+            <div class="profile-stats-box" style="display:none;">
+                <div class="profile-stat">
+                    <img src="assets/rank_goals/Pergamenas.webp" class="stat-icon-img" alt="Περγαμηνές">
+                    <span id="pergamena-display" class="stat-value">0</span>
+                </div>
+                <div class="profile-stat">
+                    <img src="assets/rank_goals/Points.webp" class="stat-icon-img" alt="Πόντοι">
+                    <span id="display-total-score" class="stat-value">0 pts</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- =========================================================
+     PERSISTENT FOOTER
+========================================================= -->
+<div id="global-footer" class="global-footer" style="display:none;">
+    <div class="start-footer-stat">
+        <img src="assets/rank_goals/Pergamenas.webp" class="footer-stat-icon-img" alt="Περγαμηνές">
+        <div>
+            <p class="footer-stat-label">Περγαμηνές</p>
+            <p id="footer-pergamena" class="footer-stat-value">0</p>
+        </div>
+    </div>
+    <button id="mute-btn" onclick="toggleMute()" class="footer-mute-btn">🔊</button>
+    <div class="start-footer-stat start-footer-stat-right">
+        <div>
+            <p class="footer-stat-label">Συνολικοί Πόντοι</p>
+            <p id="footer-total-score" class="footer-stat-value">0 pts</p>
+        </div>
+        <img src="assets/rank_goals/Points.webp" class="footer-stat-icon-img" alt="Πόντοι">
+    </div>
+</div>
+
+<!-- =========================================================
+     APP SCRIPT
+========================================================= -->
+<script src="script.js?v=01"></script>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js?v=' + Date.now())
+      .then(() => console.log('Service Worker registered'))
+      .catch(err => console.error('SW error:', err));
+  }
+</script>
+</body>
+</html>

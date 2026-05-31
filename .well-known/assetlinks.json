@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "app.web.theliteraquiz.twa",
+        "sha256_cert_fingerprints": ["C5:39:99:67:29:EE:D8:1D:54:A3:1F:1B:4B:4A:0C:90:44:A4:A5:41:7F:1F:23:67:E1:C3:14:D1:95:FF:E8:40"]
+      }
+    }]

@@ -1,0 +1,79 @@
+{
+  "name": "LiteraQuiz",
+  "short_name": "LiteraQuiz",
+  "description": "Ένα απαιτητικό κουίζ λογοτεχνίας για να δοκιμάσεις, αλλά και να εμπλουτίσεις τις γνώσεις σου.",
+  "id": "/",
+
+  "start_url": "./index.html",
+  "scope": "./",
+
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone", "minimal-ui"],
+  "orientation": "portrait",
+
+  "lang": "el",
+  "dir": "ltr",
+
+  "background_color": "#000000",
+  "theme_color": "#242424",
+
+  "categories": ["games", "education"],
+
+  "screenshots": [
+    {
+      "src": "screenshot-1-start.png",
+      "sizes": "458x852",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Αρχική Οθόνη"
+    },
+    {
+      "src": "screenshot-2-game.png",
+      "sizes": "457x852",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Παιχνίδι"
+    },
+    {
+      "src": "screenshot-3-scores.png",
+      "sizes": "462x858",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "High Scores"
+    },
+    {
+      "src": "screenshot-4-form.png",
+      "sizes": "455x857",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Υποβολή Ερώτησης"
+    }
+  ],
+
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
