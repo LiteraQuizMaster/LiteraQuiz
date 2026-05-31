@@ -118,6 +118,7 @@ body.light-theme-enabled {
 body {
     margin: 0;
     padding: 0;
+    padding-bottom: env(safe-area-inset-bottom);
     min-height: 100vh;
     min-height: 100dvh;
     display: flex;
@@ -148,6 +149,7 @@ body {
     cursor: grab;
     padding: 20px;
     padding-top: calc(20px + env(safe-area-inset-top));
+    padding-bottom: calc(20px + env(safe-area-inset-bottom));
     overflow-x: hidden;
     overflow-y: auto;
 
@@ -4268,7 +4270,7 @@ margin:2px 0;
 
 .help-library-container{
     margin-top: 0;
-    padding: 95px 10px 20px;
+    padding: 90px 10px 20px;
 }
 
 .help-library-header-fixed {
