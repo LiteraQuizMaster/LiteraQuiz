@@ -1,4 +1,4 @@
-const CACHE_NAME = 'literaquiz-' + (new URL(location.href).searchParams.get('v') || 'dev');
+const CACHE_NAME = 'literaquiz-v2';
 
 const CORE_ASSETS = [
   './',

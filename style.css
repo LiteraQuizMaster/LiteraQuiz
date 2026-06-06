@@ -147,7 +147,6 @@ body {
     flex-direction: column;
     cursor: grab;
     padding: 20px;
-    padding-top: calc(20px + env(safe-area-inset-top));
     overflow-x: hidden;
     overflow-y: auto;
 
@@ -230,6 +229,18 @@ body {
 /* =========================================================
    4. GENERIC BUTTONS
 ========================================================= */
+
+#collection-soon-modal .back-btn {
+    padding: 10px 20px;
+    margin: 15px 0 0;
+    font-size: 1rem;
+    background: #588236;
+}
+
+#collection-soon-modal .back-btn:hover {
+    background: #4a6e2c !important;
+    color: white !important;
+}
 
 button.main-btn,
 .back-btn {
@@ -1083,8 +1094,11 @@ body.light-theme-enabled #Weekly-Challenge-card:hover{
 
 /* Game options */
 #options button {
-    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     width: 100%;
+    min-height: 64px;
     padding: 16px !important;
     margin: 10px 0 !important;
     border-radius: 40px;
@@ -1093,56 +1107,81 @@ body.light-theme-enabled #Weekly-Challenge-card:hover{
     font-size: clamp(0.9rem, 3.5vw, 1.1rem);
     cursor: pointer;
     font-weight: bold !important;
+    text-align: center;
 }
 
 #options button.opt-0 {
-    background: linear-gradient(180deg, #4da6ff, #1f47b8) !important;
+    background: linear-gradient(180deg, #e74c3c, #c0392b) !important;
     border: none !important;
     color: white !important;
 }
 
 #options button.opt-1 {
-    background: linear-gradient(180deg, #c77fff, #6a2fb8) !important;
+    background: linear-gradient(180deg, #4da6ff, #1f47b8) !important;
     border: none !important;
     color: white !important;
 }
 
 #options button.opt-2 {
-    background: linear-gradient(180deg, #ffe066, #caa21a) !important;
-    border: none !important;
-    color: #1a1a1a !important;
-}
-
-#options button.opt-3 {
-    background: linear-gradient(180deg, #ff6b6b, #b82020) !important;
+    background: linear-gradient(180deg, #2ecc71, #27ae60) !important;
     border: none !important;
     color: white !important;
 }
 
-/* Correct / Wrong states */
-#options button.btn-success {
+#options button.opt-3 {
+    background: linear-gradient(180deg, #ffe066, #caa21a) !important;
+    border: none !important;
+    color: #1a1a1a !important;
+}
+}
+
+/* Correct / Wrong states — μετά τα opt-X για να τα override-άρουν */
+#options button.btn-success,
+#options button.opt-0.btn-success,
+#options button.opt-1.btn-success,
+#options button.opt-2.btn-success,
+#options button.opt-3.btn-success {
     background: var(--answer-correct) !important;
-    border-bottom: 4px solid var(--answer-correct) !important;
+    border-bottom: 4px solid darkgreen !important;
+    border-top: none !important;
+    border-left: none !important;
+    border-right: none !important;
     color: white !important;
     transform: scale(1.05);
     opacity: 1 !important;
 }
 
-#options button.btn-clicked-error {
-    background: var(--btn-5) !important;
-    border-bottom: 4px solid var(--answer-wrong) !important;
+#options button.btn-clicked-error,
+#options button.opt-0.btn-clicked-error,
+#options button.opt-1.btn-clicked-error,
+#options button.opt-2.btn-clicked-error,
+#options button.opt-3.btn-clicked-error {
+    background: #e74c3c !important;
+    border-bottom: 4px solid #c0392b !important;
+    border-top: none !important;
+    border-left: none !important;
+    border-right: none !important;
     color: white !important;
     box-shadow: 0 0 20px rgba(231, 76, 60, 0.7) !important;
     animation: shake 0.3s ease-in-out;
     opacity: 1 !important;
 }
 
-#options button.btn-other-error {
-    background: var(--answer-wrong) !important;
-    border-bottom: 4px solid var(--answer-wrong-dark) !important;
+#options button.btn-other-error,
+#options button.opt-0.btn-other-error,
+#options button.opt-1.btn-other-error,
+#options button.opt-2.btn-other-error,
+#options button.opt-3.btn-other-error {
+    background: #7b2020 !important;
+    border-bottom: 4px solid #5a1a1a !important;
+    border-top: none !important;
+    border-left: none !important;
+    border-right: none !important;
     color: white !important;
-    opacity: 0.45 !important;
+    opacity: 0.7 !important;
 }
+
+
 
 /* Timer / streak */
 .big-timer {
@@ -1198,7 +1237,7 @@ body.light-theme-enabled #Weekly-Challenge-card:hover{
     background: rgba(36, 36, 36, 0.75);
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
-    border-bottom: 1px solid rgba(255,255,255,0.20);
+    border-bottom: none;
     border-radius: 30px 30px 0 0;
     padding: 24px 16px;
     display: flex;
@@ -1986,26 +2025,61 @@ body.light-theme-enabled #avatar-screen .avatar-footer {
    16. USER PROFILE HEADER
 ========================================================= */
 
+.player-card-header-btn {
+    position: absolute;
+    top: 50%;
+    right: 16px;
+    transform: translateY(-50%);
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.05);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.18s ease, filter 0.18s ease;
+}
+
+.player-card-header-btn:hover {
+    transform: translateY(-50%) scale(1.06);
+    filter: brightness(1.08);
+}
+
+.player-card-header-btn img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
 .user-profile-header {
     display: flex;
     align-items: center;
     gap: 3px;
     margin-top: 2px;
     margin-bottom: 1px;
-    padding: 2px 15px;
+    padding: 2px 15px 2px 8px;
     background: transparent;
     border-radius: 0;
     border: none;
 }
 
 .profile-avatar-box {
-    width: 100px;
-    height: 100px;
+    width: 80px;
+    height: 80px;
     overflow: hidden;
     border-radius: 15px;
     border: 3px solid var(--gold);
     box-shadow: 0 0 10px rgba(199, 143, 87, 0.4);
     background: #1a1a1a;
+}
+
+.profile-avatar-box:hover {
+    transform: scale(1.04);
+    filter: brightness(1.08);
 }
 
 body.light-theme-enabled .profile-avatar-box {
@@ -2023,6 +2097,9 @@ body.light-theme-enabled .profile-avatar-box {
     padding-left: 16px;
     flex-direction: column;
     justify-content: center;
+    min-width: 0;
+    max-width: calc(100% - 80px);
+    overflow: hidden;
 }
 
 .gold-name {
@@ -2031,6 +2108,9 @@ body.light-theme-enabled .profile-avatar-box {
     color: var(--beige);
     text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
     letter-spacing: 1px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .player-rank {
@@ -2041,6 +2121,9 @@ body.light-theme-enabled .profile-avatar-box {
     margin-top: 2px;
     margin-bottom: 2px;
     opacity: 0.9;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .sub-name {
@@ -2049,6 +2132,9 @@ body.light-theme-enabled .profile-avatar-box {
     font-style: italic;
     margin-top: 2px;
     opacity: 0.9;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 /* =========================================================
@@ -2777,19 +2863,28 @@ color:#fff!important;
     border-radius: 30px 30px 0 0;
     overflow: hidden;
     border-bottom: 1px solid rgba(255,255,255,0.20);
+    background: rgba(36, 36, 36, 0.75);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+}
+
+body.light-theme-enabled .global-header {
+    background: rgba(196, 186, 176, 0.82);
+    border-bottom: 1px solid rgba(0,0,0,0.12);
 }
 
 .start-header-section {
-    background: #242424;
+    background: transparent;
     border: none;
     border-radius: 0;
     margin: 0;
     padding: 8px 20px 8px 20px;
     flex-shrink: 0;
+    position: relative;
 }
 
 body.light-theme-enabled .start-header-section {
-    background: #d6cec6;
+    background: transparent;
     border: none;
     border-bottom: 1px solid rgba(0,0,0,0.08);
 }
@@ -2922,22 +3017,15 @@ body.light-theme-enabled #start-screen {
 
 #start-screen .user-profile-header,
 #start-screen .profile-avatar-box{
-    cursor:pointer;
-    transition:transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
-}
-
-#start-screen .user-profile-header:hover{
-    transform:translateY(-2px);
-    filter:brightness(1.04);
+    cursor: pointer;
+    position: relative;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
 }
 
 #start-screen .profile-avatar-box:hover{
-    transform:scale(1.04);
-    filter:brightness(1.05);
-}
-
-#start-screen .profile-avatar-box{
-    position:relative;
+    transform:scale(1.08);
+    filter:brightness(1.12);
+    box-shadow: 0 0 16px rgba(245,171,84,0.6);
 }
 
 #start-screen .profile-avatar-box::after{
@@ -2969,7 +3057,12 @@ body.light-theme-enabled #start-screen {
 
 
 .profile-clickable{
-    cursor:pointer;
+    cursor: pointer;
+    transition: background 0.18s ease;
+}
+
+.profile-clickable:hover{
+    background: rgba(255,255,255,0.04);
 }
 
 .rank-screen-title{
@@ -3416,38 +3509,24 @@ margin:2px 0;
     border:2px solid rgba(199,143,87,0.45);
     box-shadow:0 10px 28px rgba(0,0,0,0.35);
 }
-    
-/* =========================
-   AVATAR TABS
-========================= */
-
-
-
-
-
-
 
 .avatar-tab.active{
     background:var(--gold);
     color:black;
 }
-    border-radius:24px;
-    background:linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
-    border:2px solid rgba(199,143,87,0.45);
-    box-shadow:0 10px 28px rgba(0,0,0,0.35);
-}
 
 .player-card-top{
     display:flex;
+    flex-direction: row;
     gap:14px;
     align-items:center;
     margin-bottom:18px;
 }
 
 .player-card-avatar-wrap{
-    width:110px;
-    height:110px;
-    border-radius:22px;
+    width:90px;
+    height:90px;
+    border-radius:18px;
     overflow:hidden;
     border:3px solid var(--gold);
     background:#111;
@@ -3566,7 +3645,7 @@ margin:2px 0;
 }
 
 .avatar-tab.active{
-        outline:2px solid #fff;
+
     box-shadow:
         0 0 12px rgba(255,255,255,0.5),
         0 0 22px rgba(255,255,255,0.25);
@@ -4268,7 +4347,7 @@ margin:2px 0;
 
 .help-library-container{
     margin-top: 0;
-    padding: 90px 10px 20px;
+    padding: 120px 10px 20px;
 }
 
 .help-library-header-fixed {
@@ -4281,7 +4360,7 @@ margin:2px 0;
     flex-direction: column;
     align-items: center;
     padding: 20px 16px 0;
-    background: rgba(36, 36, 36, 0.95);
+    background: rgba(36, 36, 36, 0.75);
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
     border-bottom: 1px solid rgba(255,255,255,0.20);
@@ -5759,32 +5838,6 @@ gap:3px;
     animation:textPulse 1.8s ease-in-out infinite;
 }
 
-.splash-dots{
-    display:flex;
-    gap:10px;
-    align-items:center;
-    justify-content:center;
-}
-
-.splash-dots span{
-    width:14px;
-    height:14px;
-    border-radius:50%;
-    background:var(--gold);
-    box-shadow:0 0 8px rgba(199,143,87,0.4);
-    animation:dotBounce 1.2s infinite ease-in-out;
-}
-
-.splash-dots span:nth-child(2){
-    animation-delay:0.15s;
-}
-
-.splash-dots span:nth-child(3){
-    animation-delay:0.3s;
-}
-
-
-
 .splash-progress{
     width:min(260px, 72vw);
     height:6px;
@@ -7028,11 +7081,7 @@ box-shadow:
     color:#f0ede5 !important;
 }
 
-#splash-screen .splash-dots span{
-    background:#c78f57 !important;
-}
-
-#splash-screen .splash-progress{
+#splash-screen #splash-screen .splash-progress{
     background:rgba(255,255,255,0.10) !important;
     border:1px solid rgba(199,143,87,0.18) !important;
 }
@@ -7642,11 +7691,7 @@ body.light-theme-enabled #splash-screen .splash-loading-text{
     color:#5C4A2E !important;
 }
 
-body.light-theme-enabled #splash-screen .splash-dots span{
-    background:#8A6B2F !important;
-}
-
-body.light-theme-enabled #splash-screen .splash-progress{
+body.light-theme-enabled #splash-screen body.light-theme-enabled #splash-screen .splash-progress{
     background:rgba(75,58,38,0.14) !important;
     border:1px solid rgba(138,107,47,0.25) !important;
 }
@@ -9345,3 +9390,461 @@ body.light-theme-enabled .finish-review-btn {
     margin-bottom: 10px;
     display: block;
 }
+/* =========================================================
+   TAROT COLLECTION
+========================================================= */
+
+.tarot-collection-header {
+    text-align: center;
+    padding: 20px 16px 10px;
+}
+
+.tarot-collection-title {
+    font-size: 1.6rem !important;
+    color: var(--gold);
+    margin: 4px 0 !important;
+}
+
+.tarot-collection-subtitle {
+    font-size: 0.82rem;
+    color: rgba(255,255,255,0.6);
+    margin: 0 0 10px;
+}
+
+.tarot-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    padding: 20px 12px 100px;
+}
+
+.tarot-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    cursor: default;
+}
+
+.tarot-card.unlocked {
+    cursor: pointer;
+}
+
+.tarot-card {
+    perspective: 800px;
+}
+
+.tarot-card-inner {
+    width: 100%;
+    aspect-ratio: 2/3;
+    border-radius: 0;
+    overflow: hidden;
+    position: relative;
+}
+
+.tarot-card.flipping .tarot-card-inner {
+    animation: tarotFlipOut 0.35s ease-in forwards;
+}
+
+.tarot-card.flipping-in .tarot-card-inner {
+    animation: tarotFlipIn 0.35s ease-out forwards;
+}
+
+@keyframes tarotFlipOut {
+    0%   { transform: rotateY(0deg) scale(1); }
+    100% { transform: rotateY(90deg) scale(0.95); }
+}
+
+@keyframes tarotFlipIn {
+    0%   { transform: rotateY(-90deg) scale(0.95); }
+    100% { transform: rotateY(0deg) scale(1); }
+}
+
+.tarot-card-front img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.tarot-card.tier-purple .tarot-card-inner { }
+.tarot-card.tier-purple .tarot-card-inner { }
+.tarot-card.tier-gold .tarot-card-inner { }
+
+.tarot-card.locked .tarot-card-inner {
+    opacity: 0.75;
+    filter: grayscale(0.1);
+}
+
+/* Glowing new card — κλειδωμένη που φτάνει tier 0 (golden glow) */
+.tarot-card.tarot-new .tarot-card-inner {
+    animation: tarotGlow 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes tarotGlow {
+    from { box-shadow: 0 0 8px rgba(199,143,87,0.4); }
+    to   { box-shadow: 0 0 22px rgba(199,143,87,1), 0 0 40px rgba(199,143,87,0.5); }
+}
+
+/* Pending unlock — κάρτα ready για αναβάθμιση */
+.tarot-card.tarot-pending .tarot-card-inner {
+    animation: tarotPendingGlow 1.5s ease-in-out infinite alternate;
+    cursor: pointer;
+}
+
+/* Κλειδωμένη pending (tier 0) → χρυσό glow */
+.tarot-card.locked.tarot-pending .tarot-card-inner {
+    animation: tarotGlow 1.5s ease-in-out infinite alternate;
+}
+
+/* Purple pending → emerald glow */
+.tarot-card.tier-purple.tarot-pending .tarot-card-inner {
+    animation: tarotEmeraldGlow 1.5s ease-in-out infinite alternate;
+}
+
+/* Emerald pending → gold glow */
+.tarot-card.tier-emerald.tarot-pending .tarot-card-inner {
+    animation: tarotGoldGlow 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes tarotPendingGlow {
+    from { box-shadow: 0 0 8px rgba(199,143,87,0.4); }
+    to   { box-shadow: 0 0 22px rgba(199,143,87,1), 0 0 40px rgba(199,143,87,0.5); }
+}
+
+@keyframes tarotEmeraldGlow {
+    from { box-shadow: 0 0 8px rgba(80,200,120,0.4); }
+    to   { box-shadow: 0 0 22px rgba(80,200,120,1), 0 0 40px rgba(80,200,120,0.5); }
+}
+
+@keyframes tarotGoldGlow {
+    from { box-shadow: 0 0 8px rgba(255,200,50,0.4); }
+    to   { box-shadow: 0 0 22px rgba(255,200,50,1), 0 0 40px rgba(255,200,50,0.5); }
+}
+
+.tarot-card-name {
+    font-size: 0.7rem;
+    text-align: center;
+    color: rgba(255,255,255,0.75);
+    line-height: 1.2;
+}
+
+.tarot-card.tier-gold .tarot-card-name { color: var(--gold); font-weight: bold; }
+.tarot-card.tier-purple .tarot-card-name { color: #c77fff; font-weight: bold; }
+
+/* Unlock notification */
+.tarot-unlock-notification {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    width: calc(100% - 40px);
+    max-width: 420px;
+    background: rgba(30,20,50,0.95);
+    border: 2px solid var(--gold);
+    border-radius: 16px;
+    padding: 12px 16px;
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    pointer-events: none;
+}
+
+.tarot-unlock-notification.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+.tarot-notif-inner {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.tarot-notif-img {
+    width: 60px;
+    height: 90px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 2px solid var(--gold);
+}
+
+.tarot-notif-title {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.6);
+    margin-bottom: 2px;
+}
+
+.tarot-notif-name {
+    font-size: 1rem;
+    font-weight: bold;
+    color: var(--beige);
+}
+
+.tarot-notif-tier {
+    font-size: 0.8rem;
+    font-weight: bold;
+    margin-top: 4px;
+}
+
+.tarot-notif-tier.tier-purple { color: #aaa; }
+.tarot-notif-tier.tier-purple { color: #c77fff; }
+.tarot-notif-tier.tier-gold { color: var(--gold); }
+
+/* Light mode */
+body.light-theme-enabled .tarot-collection-subtitle { color: rgba(0,0,0,0.5); }
+body.light-theme-enabled .tarot-card-name { color: rgba(0,0,0,0.7); }
+body.light-theme-enabled .tarot-unlock-notification { background: rgba(240,235,250,0.97); }
+body.light-theme-enabled .tarot-notif-title { color: rgba(0,0,0,0.5); }
+
+
+.tarot-card-hint {
+    font-size: 0.62rem;
+    color: rgba(255,255,255,0.4);
+    text-align: center;
+    line-height: 1.2;
+}
+
+.tarot-card-hint.tarot-hint-new {
+    color: #ffd700;
+    font-weight: bold;
+    animation: tarotHintPulse 1.2s ease-in-out infinite alternate;
+}
+
+.tarot-card-hint.tarot-hint-upgrade {
+    color: #50c878;
+    font-weight: bold;
+    animation: tarotHintPulse 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes tarotHintPulse {
+    from { opacity: 0.7; }
+    to   { opacity: 1; }
+}
+
+.tarot-card-tier {
+    font-size: 0.68rem;
+    font-weight: bold;
+    text-align: center;
+}
+
+.tarot-card-tier.tier-purple { color: #aaa; }
+.tarot-card-tier.tier-purple { color: #c77fff; }
+.tarot-card-tier.tier-gold { color: var(--gold); }
+
+.tarot-toggle-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: transparent;
+    color: rgba(255,255,255,0.5);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    transition: background 0.15s, color 0.15s;
+}
+
+.tarot-toggle-btn.active {
+    background: rgba(255,255,255,0.15);
+    color: white;
+    border-color: rgba(255,255,255,0.4);
+}
+
+.tarot-swipe-view {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 20px 12px 20px;
+    height: 560px;
+}
+
+.tarot-swipe-arrow {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.25);
+    background: rgba(255,255,255,0.05);
+    color: rgba(255,255,255,0.8);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+.tarot-swipe-arrow:hover { background: rgba(255,255,255,0.15); }
+
+@media (max-width: 768px) {
+    .tarot-swipe-arrow { display: none; }
+}
+
+.tarot-swipe-card-inner {
+    flex: 1;
+    max-width: 340px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.tarot-swipe-card-inner img {
+    width: 100%;
+    aspect-ratio: 2/3;
+    object-fit: cover;
+    border-radius: 0;
+    border: none;
+}
+
+.tarot-swipe-card-inner.tier-purple img { }
+.tarot-swipe-card-inner.tier-purple img { }
+.tarot-swipe-card-inner.tier-gold img { }
+
+.tarot-swipe-info { text-align: center; }
+.tarot-swipe-name { font-size: 1.1rem; font-weight: bold; color: var(--beige); margin-bottom: 4px; }
+.tarot-swipe-desc { font-size: 0.8rem; color: rgba(255,255,255,0.55); margin-bottom: 8px; }
+.tarot-swipe-tier { font-size: 0.85rem; font-weight: bold; margin-bottom: 4px; }
+.tarot-swipe-tier.tier-purple { color: #aaa; }
+.tarot-swipe-tier.tier-purple { color: #c77fff; }
+.tarot-swipe-tier.tier-gold { color: var(--gold); }
+.tarot-swipe-next { font-size: 0.72rem; color: rgba(255,255,255,0.4); }
+.tarot-swipe-hint { font-size: 0.75rem; color: rgba(255,255,255,0.35); }
+
+.tarot-swipe-dots {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    flex-wrap: wrap;
+    padding: 0 20px 20px;
+    margin-top: 20px;
+}
+
+.tarot-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+}
+
+.tarot-dot.active { background: var(--gold); }
+
+.tarot-card-desc {
+    font-size: 0.58rem;
+    color: rgba(255,255,255,0.45);
+    text-align: center;
+    line-height: 1.3;
+    margin-top: 2px;
+}
+
+.tarot-swipe-card-inner.locked img {
+    opacity: 0.75;
+    filter: grayscale(0.1);
+}
+.tarot-swipe-track {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    user-select: none;
+    overflow: visible;
+}
+
+.tarot-card-main {
+    flex: 1;
+    max-width: 340px;
+}
+
+.tarot-card-side {
+    display: none;
+}
+
+#tarot-swipe-card {
+    cursor: grab;
+    will-change: transform;
+}
+
+#tarot-swipe-card:active {
+    cursor: grabbing;
+}
+
+.tarot-swipe-info-text {
+    text-align: center;
+    padding: 12px 20px 0;
+    display: none;
+}
+
+.tarot-swipe-track {
+    position: relative !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    user-select: none;
+}
+
+.tarot-stack-card {
+    position: absolute;
+    width: 340px;
+    cursor: grab;
+    will-change: transform;
+    perspective: 800px;
+}
+
+.tarot-stack-card.flipping {
+    animation: tarotFlipOut 0.35s ease-in forwards;
+}
+
+.tarot-stack-card.flipping-in {
+    animation: tarotFlipIn 0.35s ease-out forwards;
+}
+
+/* Glow για swipe pending cards */
+.tarot-stack-card.locked.tarot-pending {
+    animation: tarotGlowBox 1.5s ease-in-out infinite alternate;
+}
+.tarot-stack-card.tier-purple.tarot-pending {
+    animation: tarotEmeraldGlowBox 1.5s ease-in-out infinite alternate;
+}
+.tarot-stack-card.tier-emerald.tarot-pending {
+    animation: tarotGoldGlowBox 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes tarotGlowBox {
+    from { box-shadow: 0 0 8px rgba(199,143,87,0.4); }
+    to   { box-shadow: 0 0 22px rgba(199,143,87,1), 0 0 40px rgba(199,143,87,0.5); }
+}
+@keyframes tarotEmeraldGlowBox {
+    from { box-shadow: 0 0 8px rgba(80,200,120,0.4); }
+    to   { box-shadow: 0 0 22px rgba(80,200,120,1), 0 0 40px rgba(80,200,120,0.5); }
+}
+@keyframes tarotGoldGlowBox {
+    from { box-shadow: 0 0 8px rgba(255,200,50,0.4); }
+    to   { box-shadow: 0 0 22px rgba(255,200,50,1), 0 0 40px rgba(255,200,50,0.5); }
+}
+
+.tarot-stack-card:active { cursor: grabbing; }
+
+.tarot-stack-card img {
+    width: 100%;
+    aspect-ratio: 2/3;
+    object-fit: cover;
+    border-radius: 0;
+    border: none;
+    display: block;
+    pointer-events: none;
+}
+
+.tarot-stack-card.tier-purple { box-shadow: 0 4px 20px rgba(0,0,0,0.6); }
+.tarot-stack-card.tier-purple { box-shadow: 0 4px 20px rgba(0,0,0,0.6); }
+.tarot-stack-card.tier-gold { box-shadow: 0 4px 20px rgba(0,0,0,0.6); }
+.tarot-stack-card.locked { box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+
+.tarot-card-tier.tier-emerald { color: #2ecc71; }
+.tarot-swipe-tier.tier-emerald { color: #2ecc71; }
+.tarot-notif-tier.tier-emerald { color: #2ecc71; }
+.tarot-card.tier-emerald .tarot-card-name { color: #2ecc71; font-weight: bold; }

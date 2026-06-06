@@ -1,7 +1,7 @@
 /* =========================================================
    CONFIG / SYSTEM STATE
 ========================================================= */
-window.APP_VERSION = "2026.05.21.04";  
+window.APP_VERSION = "2026.05.21.02";  
 
 let profileFormReturnScreen = 'profile-menu-screen';
 
@@ -1244,14 +1244,27 @@ function updateFooterPadding() {
     }
 }
 
+function playPageFlip(){
+    if(!soundEffectsEnabled) return;
+    const a = new Audio('assets/Sounds/Page_Flip.wav');
+    a.volume = 0.5;
+    a.play().catch(()=>{});
+}
+
+function playCardFlipSound(){
+    if(!soundEffectsEnabled) return;
+    const a = new Audio('assets/Sounds/Flip_Card.wav');
+    a.volume = 0.6;
+    a.play().catch(()=>{});
+}
+
 function goToScreen(id) {
 
 
     if(id !== 'game-screen'){
         hideFreezeIndicator();
         freezeTimeUntil = 0;
-
-        hideHeroBoostIndicator();
+        playPageFlip();
         hideDragonBonusIndicator();
         heroBoostUntil = 0;
 
@@ -1473,7 +1486,7 @@ const menuScreens = [
     const screenTitles = {
         'rank-info-screen':             'Κατάταξη',
         'mode-screen':                  'Επιλογή Παιχνιδιού',
-        'challenge-options-screen':     'Challenges',
+        'challenge-options-screen':     'Mini Games',
         'find-country-intro-screen':    'Βρες τη Χώρα',
         'score-choice-screen':          'High Scores',
         'category-screen':              'Επιλογή Κατηγορίας',
@@ -1490,6 +1503,7 @@ const menuScreens = [
         'support-form-screen':          'Φόρμα Επικοινωνίας',
         'weekly-challenge-game-screen': 'Weekly Challenge',
         'wc-scores-screen':             'Λύσεις Εβδομαδιαίου Γρίφου',
+        'tarot-collection-screen':      'Συλλογή Καρτών',
     };
 
     const navHeader = document.getElementById('global-nav-header');
@@ -1537,7 +1551,7 @@ const backRoutes = {
     'find-country-intro-screen':    'challenge-options-screen',
     'find-country-game-screen':     'challenge-options-screen',
     'score-choice-screen':          'start-screen',
-    'category-screen':              'start-screen',
+    'category-screen':              'mode-screen',
     'difficulty-screen':            'category-screen',
     'pantheon-screen':              'score-choice-screen',
     'support-screen':               'start-screen',
@@ -1545,7 +1559,8 @@ const backRoutes = {
     'terms-of-use-screen':          'support-screen',
     'profile-menu-screen':          'support-screen',
     'profile-form-screen':        'profile-menu-screen',
-    'profile-card-preview-screen':'profile-menu-screen',
+    'tarot-collection-screen':      'start-screen',
+    'profile-card-preview-screen':'start-screen',
     'help-library-screen':        'support-screen',
     'support-form-screen':        'support-screen',
 };
@@ -1553,6 +1568,18 @@ const backRoutes = {
 function handleGlobalBack() {
     const navHeader = document.getElementById('global-nav-header');
     const current = navHeader ? navHeader.getAttribute('data-current-screen') : null;
+
+    // Κρύψε tarot toggle + test button αν φεύγουμε
+    if(current === 'tarot-collection-screen'){
+        const toggle = document.getElementById('tarot-view-toggle');
+        const placeholder = document.querySelector('#global-nav-header > div[style*="width:38px"]');
+        if(toggle) toggle.style.display = 'none';
+        if(placeholder) placeholder.style.display = 'block';
+        const testBtn = document.getElementById('tarot-test-toggle');
+        const testPanel = document.getElementById('tarot-test-panel');
+        if(testBtn) testBtn.style.display = 'none';
+        if(testPanel) testPanel.style.display = 'none';
+    }
 
     // Dynamic back για profile-form-screen
     if(current === 'profile-form-screen'){
@@ -1972,6 +1999,13 @@ function openBonusQuestionModal(){
 bonusQuestionData=getRandomBonusQuestion();
 if(!bonusQuestionData)return;
 bonusQuestionActive=true;
+
+// Σταμάτα το timer του Time Attack
+if(currentGameMode === 'TimeAttack'){
+    clearInterval(timerInterval);
+    timerInterval = null;
+}
+
 const modal=document.getElementById('bonus-question-modal');
 const qText=document.getElementById('bonus-question-text');
 const options=document.getElementById('bonus-question-options');
@@ -2001,6 +2035,11 @@ const modal=document.getElementById('bonus-question-modal');
 if(modal)modal.style.display='none';
 bonusQuestionActive=false;
 bonusQuestionData=null;
+
+// Επανεκκίνηση timer αν είναι Time Attack
+if(currentGameMode === 'TimeAttack' && !timerInterval){
+    startTimeAttackTimer();
+}
 }
 
 function calculateStreakBonusPoints(){
@@ -2147,17 +2186,22 @@ const rankMode = getRankTitleMode();
 
     document.querySelectorAll('#options button').forEach(b => {
         b.style.pointerEvents = 'none';
+        // Αφαίρεσε opt-X classes ώστε να μην conflict-άρουν
+        b.classList.remove('opt-0','opt-1','opt-2','opt-3');
 
-        if(btn && b === btn){
-            if(isCorrect){
-                b.classList.add('btn-success');
-            }else{
-                b.classList.add('btn-clicked-error');
-            }
-        }else if(b.innerText === q.correct){
+        if(b.innerText === q.correct){
             b.classList.add('btn-success');
+            b.style.background = '#2ecc71';
+            b.style.color = 'white';
+        }else if(btn && b === btn){
+            b.classList.add('btn-clicked-error');
+            b.style.background = '#e74c3c';
+            b.style.color = 'white';
         }else{
             b.classList.add('btn-other-error');
+            b.style.background = '#7b2020';
+            b.style.color = 'white';
+            b.style.opacity = '0.7';
         }
     });
 
@@ -2507,11 +2551,8 @@ if (timeAttackTotalTime <= 0) {
 // --- SCORING & HIGH SCORES ---
 
 async function saveScore(pts,cat,diff){
-if(isGoogleUser()){
-await saveCloudPersonalScore(pts,cat,diff);
-return;
-}
 
+// Πάντα αποθηκεύουμε στο localStorage
 let all=JSON.parse(localStorage.getItem('quiz_scores_v11'))||{};
 const accountKey=getLocalAccountKey();
 const key=`${accountKey}_${currentGameMode}_${cat}_${diff}`;
@@ -2524,6 +2565,8 @@ streak:currentGameMode==='TimeAttack'?maxStreak:0,
 bestRun:currentGameMode==='TimeAttack'?currentCorrectAnswers:0,
 correctAnswers:currentCorrectAnswers,
 totalQuestions:currentGameMode==='Answer10'?10:currentIdx,
+timeUsed:currentGameMode==='TimeAttack'?timeAttackElapsed:0,
+noHelp:currentGameMode==='TimeAttack'?!(avatarHelpUsedThisRun||genderHelpUsedThisRun||rankHelpUsedThisRun||refreshHelpUsedThisRun):false,
 username:playerProfile.username||"",
 date:new Date().toISOString()
 });
@@ -2532,6 +2575,11 @@ all[key].sort((a,b)=>(b.pts||0)-(a.pts||0));
 all[key]=all[key].slice(0,15);
 
 localStorage.setItem('quiz_scores_v11',JSON.stringify(all));
+
+// Επιπλέον cloud save για Google users
+if(isGoogleUser()){
+await saveCloudPersonalScore(pts,cat,diff);
+}
 }
 
 async function saveCloudPersonalScore(pts,cat,diff){
@@ -3236,10 +3284,25 @@ function selectCat(element, cat) { currentHS_Cat = cat; document.querySelectorAl
 // Οριστική έξοδος
 function forceExit() {
     const modal = document.getElementById('confirm-modal');
-    if (modal) modal.style.display = 'none';
+    if (modal) { modal.style.display = "none"; modal.classList.add("is-hidden"); }
 
     clearInterval(timerInterval);
     timerInterval = null;
+
+    // Time Attack με λιγότερες από 5 ερωτήσεις → αρχική χωρίς καταγραφή
+    if(currentGameMode === 'TimeAttack' && currentIdx < 5){
+        currentIdx = 0; score = 0; streak = 0; maxStreak = 0;
+        goToScreen('start-screen');
+        return;
+    }
+
+    // Answer 10 χωρίς να ολοκληρωθούν και οι 10 → αρχική χωρίς καταγραφή
+    if(currentGameMode === 'Answer10' && currentIdx < 10){
+        currentIdx = 0; score = 0; streak = 0; maxStreak = 0;
+        goToScreen('start-screen');
+        return;
+    }
+
     showFinishScreen();
 }
 
@@ -3353,13 +3416,15 @@ document.addEventListener("visibilitychange", function() {
 function confirmExit() {
     const modal = document.getElementById('confirm-modal');
     if (modal) {
+        modal.classList.remove('is-hidden');
         modal.style.display = 'flex';
         clearInterval(timerInterval); 
     }
 }
 
 function closeConfirmModal() {
-    document.getElementById('confirm-modal').style.display = 'none';
+    const modal = document.getElementById('confirm-modal');
+    if(modal){ modal.style.display = 'none'; modal.classList.add('is-hidden'); }
     if (currentGameMode === 'TimeAttack') {
         startTimeAttackTimer();
     } else if (currentGameMode === 'Answer10') {
@@ -3503,6 +3568,7 @@ if(!termsCheckbox || !termsCheckbox.checked){
         window.playerPergamena = 0;
         updatePergamenaDisplay();
         applyUnlockedAvatarsFromStorage();
+        loadTarotFromFirestore();
 
         const modal = document.getElementById('google-username-modal');
         const input = document.getElementById('google-username-input');
@@ -3955,6 +4021,7 @@ const allAvatars = {
     // EPIC — 2000
     {id:"Cavafy", name:"Κωνσταντίνος Π. Καβάφης", img:"assets/avatar-poets/Cavafy.webp", locked:true, cost:AVATAR_COST.epic},
     {id:"Ono", name:"Ono no Komachi", img:"assets/avatar-poets/Ono_no_Komachi.webp", locked:true, cost:AVATAR_COST.epic},
+    {id:"Solomos", name:"Διονύσιος Σολωμός", img:"assets/avatar-poets/Dionisios_Solomos.webp", locked:true, cost:AVATAR_COST.epic},
 
     // UNIQUE
     {id:"Pushkin", name:"Alexander Pushkin", img:"assets/avatar-poets/Alexander_Sergeyevich_Pushkin.webp", locked:true, cost:AVATAR_COST.unique},
@@ -4394,14 +4461,15 @@ async function getCloudBestTimeAttackRun(){
     return getBestTimeAttackRun();
 }
 
-async function getTotalGamesPlayed(){
-
-if(playerProfile.isAuthenticated &&
-playerProfile.authType === "google"){
-
-return await getCloudTotalGamesPlayed();
-
+async function getCloudTotalGamesPlayed(){
+    return await getTotalGamesPlayed();
 }
+
+async function getCloudOverallAccuracy(){
+    return await getOverallAccuracy();
+}
+
+async function getTotalGamesPlayed(){
 
 // ===== LOCAL =====
 
@@ -4429,13 +4497,6 @@ return totalGames;
 }
 
 async function getOverallAccuracy(){
-
-if(playerProfile.isAuthenticated &&
-playerProfile.authType === "google"){
-
-return await getCloudOverallAccuracy();
-
-}
 
 // ===== LOCAL =====
 
@@ -5461,7 +5522,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const usernameInput = document.getElementById("username-input");
     if(usernameInput){
         usernameInput.addEventListener("input", () => {
-            if(usernameInput.value.length > 13){
+            if(usernameInput.value.length > 16){
                 usernameInput.value = usernameInput.value.slice(0, 13);
                 showUsernameLimitWarning();
             }
@@ -5982,6 +6043,11 @@ function setTheme(theme){
         "literaTheme",
         theme
     );
+    /* theme-color meta tag */
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if(meta){
+        meta.setAttribute('content', theme === 'light' ? '#c4bab0' : '#242424');
+    }
     updateThemeUI(theme);
     log("Theme set:", theme);
 }
@@ -6116,7 +6182,12 @@ function finishProfilePreview(){
         return;
     }
 
-    goToScreen('profile-menu-screen');
+    // Επέστρεψε από όπου ήρθες
+    if(profileFormReturnScreen === 'profile-card-preview-screen'){
+        goToScreen('start-screen');
+    } else {
+        goToScreen('profile-menu-screen');
+    }
 }
 
 function loadMyProfileData(){
@@ -6201,7 +6272,17 @@ async function resetCloudProgressOnly(){
         );
     });
 
+    // Διαγραφή tarot subcollection
+    const tarotRef = window.firebaseCollection(db, "players", playerProfile.uid, "tarot");
+    const tarotSnap = await window.firebaseGetDocs(tarotRef);
+    tarotSnap.forEach(docSnap => {
+        deletes.push(window.firebaseDeleteDoc(docSnap.ref));
+    });
+
     await Promise.all(deletes);
+
+    // Reset local tarot cache
+    if(playerProfile.tarot) playerProfile.tarot = {};
 
     await window.firebaseSetDoc(playerRef, {
         pergamena: 0,
@@ -6392,9 +6473,14 @@ const deleteFieldFn=window.firebaseDeleteField;
 const playerRef=docFn(db,"players",playerProfile.uid);
 const historyRef=collectionFn(db,"players",playerProfile.uid,"score_history");
 const historySnap=await getDocsFn(historyRef);
-
 for(const docSnap of historySnap.docs){
 await deleteDocFn(docFn(db,"players",playerProfile.uid,"score_history",docSnap.id));
+}
+
+const tarotRef=collectionFn(db,"players",playerProfile.uid,"tarot");
+const tarotSnap=await getDocsFn(tarotRef);
+for(const docSnap of tarotSnap.docs){
+await deleteDocFn(docFn(db,"players",playerProfile.uid,"tarot",docSnap.id));
 }
 
 const globalRef=collectionFn(db,"global_scores");
@@ -7522,6 +7608,175 @@ if(modal)modal.style.display='none';
 }
 
 
+function openPlayerCardFromHeader(){
+    profileFormReturnScreen = 'profile-card-preview-screen';
+    renderProfileCardPreview();
+    goToScreen('profile-card-preview-screen');
+}
+
+function setTarotView(view){
+    const gridBtn = document.getElementById('tarot-btn-grid');
+    const swipeBtn = document.getElementById('tarot-btn-swipe');
+    const grid = document.getElementById('tarot-grid');
+    const swipeView = document.getElementById('tarot-swipe-view');
+    const dots = document.getElementById('tarot-swipe-dots');
+
+    const infoText = document.getElementById('tarot-swipe-info-text');
+
+    if(view === 'grid'){
+        if(gridBtn) gridBtn.classList.add('active');
+        if(swipeBtn) swipeBtn.classList.remove('active');
+        if(grid) grid.style.display = 'grid';
+        if(swipeView) swipeView.style.display = 'none';
+        if(dots) dots.style.display = 'none';
+        if(infoText) infoText.style.display = 'none';
+    } else {
+        if(swipeBtn) swipeBtn.classList.add('active');
+        if(gridBtn) gridBtn.classList.remove('active');
+        if(grid) grid.style.display = 'none';
+        if(swipeView) swipeView.style.display = 'flex';
+        if(dots) dots.style.display = 'flex';
+        if(infoText) infoText.style.display = 'block';
+        renderTarotSwipe();
+    }
+}
+
+async function openTarotCollection(){
+    goToScreen('tarot-collection-screen');
+    // Εμφάνισε toggle, κρύψε placeholder
+    const toggle = document.getElementById('tarot-view-toggle');
+    const placeholder = document.querySelector('#global-nav-header > div[style*="width:38px"]');
+    if(toggle) toggle.style.display = 'flex';
+    if(placeholder) placeholder.style.display = 'none';
+    // Εμφάνισε test button
+    const testBtn = document.getElementById('tarot-test-toggle');
+    if(testBtn) testBtn.style.display = 'flex';
+    initTarotTestPanel();
+    await renderTarotCollection();
+}
+
+// ── TEST MODE FUNCTIONS ──────────────────────────────────────
+function toggleTarotTestPanel(){
+    const panel = document.getElementById('tarot-test-panel');
+    if(!panel) return;
+    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+
+function initTarotTestPanel(){
+    const sel = document.getElementById('tarot-test-card');
+    if(!sel || sel.options.length > 0) return;
+    TAROT_CARDS.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.textContent = c.name;
+        sel.appendChild(opt);
+    });
+}
+
+async function tarotTestUnlock(){
+    const cardId = document.getElementById('tarot-test-card').value;
+    const tierIdx = parseInt(document.getElementById('tarot-test-tier').value);
+    const card = TAROT_CARDS.find(c => c.id === cardId);
+    if(!card) return;
+
+    // Γράψε στο local state ως pending (για να τρέξει το flip animation)
+    if(!playerProfile.tarot) playerProfile.tarot = {};
+    const currentTierIdx = tierIdx - 1; // το tier πριν το pending
+    playerProfile.tarot[cardId] = {
+        tierIdx: currentTierIdx,
+        pendingTierIdx: tierIdx,
+        seen: true
+    };
+
+    // Γράψε στο Firestore αν είναι Google user
+    if(isGoogleUser() && window.firebaseDB){
+        try {
+            await window.firebaseSetDoc(
+                window.firebaseDoc(window.firebaseDB, 'players', playerProfile.uid, 'tarot', cardId),
+                {
+                    tierIdx: currentTierIdx,
+                    tier: currentTierIdx >= 0 ? TAROT_TIER[currentTierIdx] : null,
+                    pendingTierIdx: tierIdx,
+                    unlockedAt: new Date().toISOString(),
+                    seen: true
+                },
+                { merge: false }
+            );
+        } catch(e){ console.error('Test unlock Firestore error:', e); }
+    }
+
+    // Re-render και scroll στην κάρτα
+    await renderTarotCollection();
+    setTimeout(() => {
+        const allCards = document.querySelectorAll('#tarot-grid .tarot-card');
+        const idx = TAROT_CARDS.findIndex(c => c.id === cardId);
+        if(allCards[idx]){
+            allCards[idx].scrollIntoView({ behavior:'smooth', block:'center' });
+        }
+    }, 200);
+}
+
+async function tarotTestUnlockAll(){
+    if(!confirm('Βάλε όλες τις κάρτες ως pending tier 0 (για να δεις τα animations);')) return;
+
+    if(!playerProfile.tarot) playerProfile.tarot = {};
+    const writes = [];
+
+    for(const card of TAROT_CARDS){
+        playerProfile.tarot[card.id] = { tierIdx: -1, pendingTierIdx: 0, seen: true };
+        if(isGoogleUser() && window.firebaseDB){
+            writes.push(
+                window.firebaseSetDoc(
+                    window.firebaseDoc(window.firebaseDB, 'players', playerProfile.uid, 'tarot', card.id),
+                    { tierIdx: -1, tier: null, pendingTierIdx: 0, unlockedAt: new Date().toISOString(), seen: true },
+                    { merge: false }
+                ).catch(e => console.error('Unlock all error:', card.id, e))
+            );
+        }
+    }
+
+    await Promise.all(writes);
+    await renderTarotCollection();
+    log('TEST: All cards set to pending tier 0');
+}
+
+async function tarotTestReset(){
+    if(!confirm('Reset όλες τις tarot κάρτες;')) return;
+    if(!playerProfile.tarot) return;
+
+    // Καθάρισε local state
+    playerProfile.tarot = {};
+
+    // Καθάρισε Firestore
+    if(isGoogleUser() && window.firebaseDB){
+        try {
+            const snap = await window.firebaseGetDocs(
+                window.firebaseCollection(window.firebaseDB, 'players', playerProfile.uid, 'tarot')
+            );
+            const batch = [];
+            snap.forEach(doc => batch.push(
+                window.firebaseDeleteDoc(
+                    window.firebaseDoc(window.firebaseDB, 'players', playerProfile.uid, 'tarot', doc.id)
+                )
+            ));
+            await Promise.all(batch);
+        } catch(e){ console.error('Test reset error:', e); }
+    }
+
+    await renderTarotCollection();
+    log('TEST: Tarot reset complete');
+}
+// ── END TEST MODE ────────────────────────────────────────────
+
+function openCollectionComingSoonModal(){
+    const m = document.getElementById('collection-soon-modal');
+    if(m) m.style.display = 'flex';
+}
+function closeCollectionComingSoonModal(){
+    const m = document.getElementById('collection-soon-modal');
+    if(m) m.style.display = 'none';
+}
+
 function closeDonateSoonModal(){
 const soonModal=document.getElementById('donate-soon-modal');
 if(soonModal)soonModal.style.display='none';
@@ -7821,7 +8076,22 @@ if(
     }, 3000);
 }
 
+    // Ενημέρωσε UI αμέσως χωρίς αναμονή Firebase
+    const newTotal = getTotalPlayerScore();
+    playerProfile.pantheonTotalScore = newTotal;
+    playerProfile.pantheonBestStreak = getBestTimeAttackStreak();
+    playerProfile.pantheonBestRun = getBestTimeAttackRun();
+    playerProfile.pantheonPerfect10 = perfect10Count || 0;
+    const footerScore = document.getElementById('footer-total-score');
+    if(footerScore) footerScore.textContent = newTotal + ' pts';
+    const displayScore = document.getElementById('display-total-score');
+    if(displayScore) displayScore.textContent = newTotal + ' pts';
+    renderRankInfo();
+
     await updatePantheonPlayerStats();
+
+    // Έλεγξε tarot unlocks
+    checkAndUpdateTarot().catch(e=>console.error('Tarot check error:',e));
 
     let reward = 0;
 
@@ -9342,3 +9612,641 @@ window.addEventListener('resize', () => {
     }
     updateFooterPadding();
 });
+/* =========================================================
+   TAROT CARD SYSTEM
+========================================================= */
+
+const CDN = 'https://cdn.jsdelivr.net/gh/LiteraQuizMaster/literaquiz-assets@latest/Tarot/';
+const CDN_FOLDERS = ['Tarot_Purple', 'Tarot_Emerald', 'Tarot_Gold'];
+
+function getTarotImgUrl(tierIdx, img){
+    if(tierIdx < 0) return CDN + 'Card_Back.webp';
+    const folder = CDN_FOLDERS[tierIdx] || CDN_FOLDERS[0];
+    return CDN + folder + '/' + encodeURIComponent(img);
+}
+
+const TAROT_CARDS = [
+    { id:'flamegod', desc:'Ολοκλήρωσε αλάνθαστο Time Attack (10+ ερωτήσεις)',    name:'Ο Φλεγόμενος',          img:'Ο Φλεγόμενος.webp',
+      tiers:[3,10,50],   check:(s)=>s.perfectRunsTA },
+    { id:'ouroboros', desc:'Αλάνθαστο Time Attack (10+ ερωτ.) χωρίς χρήση βοήθειας',   name:'Ο Ουροβόρος',            img:'Ο Ουροβόρος.webp',
+      tiers:[3,10,50],   check:(s)=>s.perfectRunsTA_noHelp },
+    { id:'rocket', desc:'Υψηλός ρυθμός βαθμών ανά δευτερόλεπτο σε Time Attack (pts/χρόνο ≥ 8)',      name:'Ο Πύραυλος',             img:'Ο Πύραυλος.webp',
+      tiers:[5,10,15],   check:(s)=>s.quickResponses },
+    { id:'charon', desc:'Δώσε συνεχόμενες σωστές απαντήσεις χωρίς διακοπή',      name:'Ο Χάρος',                img:'Ο Χάρος.webp',
+      tiers:[10,25,50],  check:(s)=>s.bestStreak },
+    { id:'aiolometis', desc:'Τέλειο 10/10 στο δύσκολο επίπεδο, χωρίς βοήθεια',  name:'Ο Αιολόμητις',           img:'Ο Αιολόμητις.webp',
+      tiers:[3,10,50],   check:(s)=>s.perfect10Hard },
+    { id:'enkrateia', desc:'Τέλειο 10/10 στην κλιμάκωση, χωρίς καμία βοήθεια',   name:'Εγκράτεια',              img:'Εγκράτεια.webp',
+      tiers:[3,10,50],   check:(s)=>s.perfect10Scaling },
+    { id:'glaukopis', desc:'Αλάνθαστες νίκες στην Ελληνική Λογοτεχνία — Κλιμάκωση',   name:'Η Γλαυκώπις',            img:'Η Γλαυκώπις.webp',
+      tiers:[20,50,100], check:(s)=>s.perfectWinsGreekScaling },
+    { id:'glaux', desc:'Αλάνθαστες νίκες στην Ελληνική Λογοτεχνία — Δύσκολο',       name:'Η Γλαυξ',                img:'Η Γλαυξ.webp',
+      tiers:[20,50,100], check:(s)=>s.perfectWinsGreekHard },
+    { id:'hound', desc:'Αλάνθαστες νίκες στην Ελληνική Λογοτεχνία — Μεσαίο',       name:'Το Λαγωνικό',            img:'Το Λαγωνικό.webp',
+      tiers:[20,50,100], check:(s)=>s.perfectWinsGreekMedium },
+    { id:'fox', desc:'Αλάνθαστες νίκες στην Ελληνική Λογοτεχνία — Εύκολο',         name:'Η Αλεπού',               img:'Η Αλεπού.webp',
+      tiers:[20,50,100], check:(s)=>s.perfectWinsGreekEasy },
+    { id:'norns', desc:'Αλάνθαστες νίκες στην Παγκόσμια Λογοτεχνία — Κλιμάκωση',       name:'Οι Νόρνες',              img:'Οι Νόρνες.webp',
+      tiers:[20,50,100], check:(s)=>s.perfectWinsWorldScaling },
+    { id:'seafarer', desc:'Αλάνθαστες νίκες στην Παγκόσμια Λογοτεχνία — Δύσκολο',    name:'Ο Αρχαίος Θαλασσοπόρος', img:'Ο Αρχαίος Θαλασσοπόρος.webp',
+      tiers:[20,50,100], check:(s)=>s.perfectWinsWorldHard },
+    { id:'traveler', desc:'Αλάνθαστες νίκες στην Παγκόσμια Λογοτεχνία — Μεσαίο',    name:'Ο Ταξιδευτής',           img:'Ο Ταξιδευτής.webp',
+      tiers:[20,50,100], check:(s)=>s.perfectWinsWorldMedium },
+    { id:'firststep', desc:'Αλάνθαστες νίκες στην Παγκόσμια Λογοτεχνία — Εύκολο',   name:'Το πρώτο σκαλί',         img:'Το Πρώτο Σκαλί.webp',
+      tiers:[20,50,100], check:(s)=>s.perfectWinsWorldEasy },
+    { id:'sisyphos', desc:'Αφοσίωση στο Answer 10 — παιχνίδια χωρίς τέλος',    name:'Ο Σίσυφος',              img:'Ο Σίσυφος.webp',
+      tiers:[50,500,1000],check:(s)=>s.gamesA10 },
+    { id:'chimera', desc:'Αδάμαστος στο Time Attack — αψηφά το χρόνο',     name:'Η Χίμαιρα',              img:'Η Χίμαιρα.webp',
+      tiers:[50,500,1000],check:(s)=>s.gamesTA },
+    { id:'researcher', desc:'Ο αδάμαστος κυνηγός του εβδομαδιαίου γρίφου',  name:'Ο Ερευνητής',            img:'Ο Ερευνητής.webp',
+      tiers:[10,52,100], check:(s)=>s.gamesWC },
+    { id:'player', desc:'Αφοσίωση στα Mini Games — ο αληθινός αγωνιστής',      name:'Ο Παίκτης',              img:'Ο Παίκτης.webp',
+      tiers:[50,500,1000],check:(s)=>s.gamesMC },
+    { id:'librarian', desc:'Συλλέκτης περγαμηνών — θησαυροφύλακας της γνώσης',   name:'Η Βιβλιοθηκάριος',      img:'Η Βιβλιοθηκάριος.webp',
+      tiers:[200,1000,10000],check:(s)=>s.pergamena },
+    { id:'enigma', desc:'Λύτης εβδομαδιαίων γρίφων — ο νους που δεν κάμπτεται',      name:'Το Αίνιγμα',             img:'Το Αίνιγμα.webp',
+      tiers:[5,25,52],   check:(s)=>s.wcSolved },
+    { id:'oedipus', desc:'Λύνει γρίφους με λιγότερα από 3 στοιχεία',     name:'Ο Οιδίπους',             img:'Ο Οιδίπους.webp',
+      tiers:[6,10,30],   check:(s)=>s.wcSolvedUnder3 },
+    { id:'mantissa', desc:'Λύνει γρίφους με μόνο το αρχικό στοιχείο',    name:'Η Μάντισσα',             img:'Η Μάντισσα.webp',
+      tiers:[1,3,5],     check:(s)=>s.wcSolvedZeroClues },
+    { id:'slaughter', desc:'Συνεχόμενες λάθος απαντήσεις — η γνώση φτάνει με πόνο',   name:'Σφαγή',                  img:'Σφαγή.webp',
+      tiers:[5,15,20],   check:(s)=>s.wrongStreak },
+    { id:'knowledgetree', desc:'Χιλιάδες σωστές απαντήσεις — ρίζες βαθιές στη λογοτεχνία',name:'Δέντρο της Γνώσης',     img:'Το Δέντρο της Γνώσης.webp',
+      tiers:[500,1000,10000],check:(s)=>s.totalCorrect },
+    { id:'slacker', desc:'Χιλιάδες λάθη — αλλά εξακολουθεί να παίζει',     name:'Ο Ανεπρόκοπος',         img:'Ο Ανεπρόκοπος.webp',
+      tiers:[1000,5000,10000],check:(s)=>s.totalWrong },
+    { id:'typewriter', desc:'Ξεκλείδωσε avatars λογοτεχνών — μύστες του πεζού λόγου',  name:'Η Γραφομηχανή',          img:'Η Γραφομηχανή.webp',
+      tiers:[1,50,100],  check:(s)=>s.avatarPctProse, pct:true },
+    { id:'muse', desc:'Ξεκλείδωσε avatars ποιητών — φωνές που αντηχούν στους αιώνες',        name:'Η Μούσα',                img:'Η Μούσα.webp',
+      tiers:[1,50,100],  check:(s)=>s.avatarPctPoets, pct:true },
+    { id:'chorus', desc:'Ξεκλείδωσε avatars θεατρικών — μάσκες που αποκαλύπτουν αλήθειες',      name:'Ο Χορός',                img:'Ο Χορός.webp',
+      tiers:[1,50,100],  check:(s)=>s.avatarPctPlaywrights, pct:true },
+    { id:'hero', desc:'Ξεκλείδωσε avatars λογοτεχνικών ηρώων — θρύλοι που ζουν στις σελίδες',        name:'Ο Ήρωας',                img:'Ο Ήρωας.webp',
+      tiers:[1,50,100],  check:(s)=>s.avatarPctHeroes, pct:true },
+];
+
+const TAROT_TIER = ['purple','emerald','gold'];
+
+// Υπολόγισε % ξεκλειδωμένων avatars ανά κατηγορία
+function getAvatarPct(category){
+    const cats = allAvatars[category] || [];
+    if(!cats.length) return 0;
+    const unlocked = cats.filter(a => !a.locked || (unlockedAvatars||[]).includes(a.id));
+    return Math.round((unlocked.length / cats.length) * 100);
+}
+
+// Μάζεψε όλα τα stats για τον έλεγχο
+async function collectTarotStats(){
+    const all = JSON.parse(localStorage.getItem('quiz_scores_v11')) || {};
+    const accountKey = playerProfile.accountKey ||
+        `guest_${(playerProfile.username||'anonymous').trim().toLowerCase()}`;
+
+    let gamesA10=0, gamesTA=0, gamesMC=0;
+    let perfectRunsTA=0, perfectRunsTA_noHelp=0, quickResponses=0;
+    let perfect10Hard=0, perfect10Scaling=0;
+    let perfectWinsGreekScaling=0, perfectWinsGreekHard=0, perfectWinsGreekMedium=0, perfectWinsGreekEasy=0;
+    let perfectWinsWorldScaling=0, perfectWinsWorldHard=0, perfectWinsWorldMedium=0, perfectWinsWorldEasy=0;
+    let totalCorrect=0, totalWrong=0;
+
+    Object.keys(all).forEach(key => {
+        if(!key.startsWith(accountKey)) return;
+        const entries = all[key] || [];
+        const mode = key.includes('_TimeAttack_') ? 'TA' :
+                     key.includes('_Answer10_') ? 'A10' :
+                     key.includes('_Challenge_') ? 'MC' : null;
+        const parts = key.split('_');
+        const cat = parts.length > 2 ? parts[parts.length-2] : '';
+        const diff = parts.length > 1 ? parts[parts.length-1] : '';
+
+        entries.forEach(e => {
+            if(mode==='A10') gamesA10++;
+            if(mode==='TA') gamesTA++;
+            if(mode==='MC') gamesMC++;
+            totalCorrect += Number(e.correctAnswers||0);
+            totalWrong += Number((e.totalQuestions||0) - (e.correctAnswers||0));
+
+            if(mode==='TA' && e.correctAnswers>=10 && e.pts>0){
+                perfectRunsTA++;
+                if(e.noHelp) perfectRunsTA_noHelp++;
+            }
+            if(mode==='TA' && e.timeUsed>0 && e.correctAnswers>0){
+                const ratio = e.pts / e.timeUsed;
+                if(ratio >= 8) quickResponses++;
+            }
+            if(mode==='A10' && e.correctAnswers===10){
+                if(diff==='Hard') perfect10Hard++;
+                if(diff==='Scaling') perfect10Scaling++;
+            }
+        });
+    });
+
+    // Perfect wins per cat/diff
+    ['GreekScaling','GreekHard','GreekMedium','GreekEasy',
+     'WorldScaling','WorldHard','WorldMedium','WorldEasy'].forEach(combo => {
+        const catKey = combo.startsWith('Greek') ? 'Ελληνική Λογοτεχνία' : 'Παγκόσμια Λογοτεχνία';
+        const diffKey = combo.replace('Greek','').replace('World','');
+        const diffMap = {Scaling:'Scaling',Hard:'Hard',Medium:'Μεσαίο',Easy:'Εύκολο'};
+        Object.keys(all).forEach(key => {
+            if(!key.startsWith(accountKey)) return;
+            if(!key.includes('_Answer10_')) return;
+            if(!key.includes(catKey)) return;
+            if(!key.includes(diffMap[diffKey]||diffKey)) return;
+            const cnt = (all[key]||[]).filter(e=>e.correctAnswers===10).length;
+            if(combo==='GreekScaling') perfectWinsGreekScaling+=cnt;
+            else if(combo==='GreekHard') perfectWinsGreekHard+=cnt;
+            else if(combo==='GreekMedium') perfectWinsGreekMedium+=cnt;
+            else if(combo==='GreekEasy') perfectWinsGreekEasy+=cnt;
+            else if(combo==='WorldScaling') perfectWinsWorldScaling+=cnt;
+            else if(combo==='WorldHard') perfectWinsWorldHard+=cnt;
+            else if(combo==='WorldMedium') perfectWinsWorldMedium+=cnt;
+            else if(combo==='WorldEasy') perfectWinsWorldEasy+=cnt;
+        });
+    });
+
+    // WC stats από Firebase
+    let wcSolved=0, wcSolvedUnder3=0, wcSolvedZeroClues=0, gamesWC=0;
+    let wrongStreak = parseInt(localStorage.getItem('litera_wrongStreak')||'0');
+    let bestStreak = getBestTimeAttackStreak();
+    let pergamena = window.playerPergamena || 0;
+
+    if(isGoogleUser() && window.firebaseDB){
+        try {
+            const snap = await window.firebaseGetDocs(
+                window.firebaseCollection(window.firebaseDB, 'players', playerProfile.uid, 'weekly_challenges')
+            );
+            snap.forEach(doc => {
+                const d = doc.data();
+                gamesWC++;
+                if(d.solved){
+                    wcSolved++;
+                    if((d.unlocked_clues||0) < 3) wcSolvedUnder3++;
+                    if((d.unlocked_clues||0) === 0) wcSolvedZeroClues++;
+                }
+            });
+        } catch(e){}
+    }
+
+    return {
+        gamesA10, gamesTA, gamesMC, gamesWC,
+        perfectRunsTA, perfectRunsTA_noHelp, quickResponses,
+        perfect10Hard, perfect10Scaling,
+        perfectWinsGreekScaling, perfectWinsGreekHard, perfectWinsGreekMedium, perfectWinsGreekEasy,
+        perfectWinsWorldScaling, perfectWinsWorldHard, perfectWinsWorldMedium, perfectWinsWorldEasy,
+        totalCorrect, totalWrong, wrongStreak, bestStreak, pergamena,
+        wcSolved, wcSolvedUnder3, wcSolvedZeroClues,
+        avatarPctProse: getAvatarPct('Πεζογραφία'),
+        avatarPctPoets: getAvatarPct('Ποίηση'),
+        avatarPctPlaywrights: getAvatarPct('Θέατρο'),
+        avatarPctHeroes: getAvatarPct('Λογοτεχνικοί Ήρωες'),
+    };
+}
+
+// Τρέξε τον έλεγχο και ενημέρωσε το Firestore
+async function checkAndUpdateTarot(){
+    if(!isGoogleUser() || !window.firebaseDB) return;
+
+    const stats = await collectTarotStats();
+    const uid = playerProfile.uid;
+    const newlyPending = [];
+
+    for(const card of TAROT_CARDS){
+        const val = card.check(stats);
+        if(val === undefined || val === null) continue;
+
+        // Διάβασε υπάρχον state από cache
+        const cached = (playerProfile.tarot || {})[card.id];
+        const currentTierIdx = cached ? (cached.tierIdx !== undefined ? cached.tierIdx : -1) : -1;
+        const existingPending = cached ? (cached.pendingTierIdx !== undefined ? cached.pendingTierIdx : null) : null;
+
+        // Επόμενο tier = currentTierIdx + 1 (μόνο +1, χωρίς skip)
+        const nextTierIdx = currentTierIdx + 1;
+        if(nextTierIdx > 2) continue; // ήδη στο max
+
+        const threshold = card.tiers[nextTierIdx];
+        const achieved = val >= threshold;
+
+        if(achieved && existingPending !== nextTierIdx){
+            // Γράψε μόνο pendingTierIdx — ο παίκτης θα κάνει το flip
+            try {
+                await window.firebaseSetDoc(
+                    window.firebaseDoc(window.firebaseDB, 'players', uid, 'tarot', card.id),
+                    { pendingTierIdx: nextTierIdx, unlockedAt: new Date().toISOString() },
+                    { merge: true }
+                );
+                if(!playerProfile.tarot) playerProfile.tarot = {};
+                if(!playerProfile.tarot[card.id]) playerProfile.tarot[card.id] = { tierIdx: currentTierIdx, seen: true };
+                playerProfile.tarot[card.id].pendingTierIdx = nextTierIdx;
+                newlyPending.push({ card, tierIdx: nextTierIdx });
+            } catch(e){ console.error('Tarot save error:', e); }
+        }
+    }
+
+    if(newlyPending.length > 0){
+        showTarotUnlockNotification(newlyPending);
+    }
+}
+
+// Φόρτωσε tarot από Firestore στο playerProfile
+async function loadTarotFromFirestore(){
+    if(!isGoogleUser() || !window.firebaseDB) return;
+    try {
+        const snap = await window.firebaseGetDocs(
+            window.firebaseCollection(window.firebaseDB, 'players', playerProfile.uid, 'tarot')
+        );
+        if(!playerProfile.tarot) playerProfile.tarot = {};
+        snap.forEach(doc => {
+            const d = doc.data();
+            const tierIdx = d.tierIdx !== undefined ? d.tierIdx : TAROT_TIER.indexOf(d.tier);
+            playerProfile.tarot[doc.id] = {
+                tierIdx,
+                pendingTierIdx: d.pendingTierIdx !== undefined ? d.pendingTierIdx : null,
+                seen: d.seen !== false
+            };
+        });
+        log('Tarot loaded:', playerProfile.tarot);
+    } catch(e){ console.error('Tarot load error:', e); }
+}
+
+// Notification για νέα unlocked κάρτα
+function showTarotUnlockNotification(unlocked){
+    const container = document.getElementById('tarot-unlock-notification');
+    if(!container) return;
+    const card = unlocked[0].card;
+    const tierIdx = unlocked[0].tierIdx;
+    const tierNames = ['Μαύρο', 'Πορφυρό', 'Χρυσό'];
+    container.innerHTML = `
+        <div class="tarot-notif-inner">
+            <img src="${CDN}${encodeURIComponent(card.img)}" class="tarot-notif-img">
+            <div>
+                <div class="tarot-notif-title">Νέα Κάρτα Tarot!</div>
+                <div class="tarot-notif-name">${card.name}</div>
+                <div class="tarot-notif-tier tier-${TAROT_TIER[tierIdx]}">${tierNames[tierIdx]}</div>
+            </div>
+        </div>
+    `;
+    container.classList.add('show');
+    playAvatarUnlock();
+    setTimeout(()=>container.classList.remove('show'), 4000);
+}
+
+// Render collection screen
+async function renderTarotCollection(){
+    const grid = document.getElementById('tarot-grid');
+    if(!grid) return;
+    grid.innerHTML = '';
+
+    const tarotData = playerProfile.tarot || {};
+    const tierNames = ['Πορφυρό','Σμαραγδένιο','Χρυσό'];
+
+    for(const card of TAROT_CARDS){
+        const cached = tarotData[card.id];
+        // Υποστήριξη παλιού format (number) και νέου (object)
+        const tierIdx    = cached !== undefined ? (typeof cached === 'object' ? (cached.tierIdx ?? -1) : cached) : -1;
+        const pendingIdx = cached !== undefined && typeof cached === 'object' ? (cached.pendingTierIdx ?? null) : null;
+        const seen       = cached !== undefined && typeof cached === 'object' ? (cached.seen !== false) : true;
+
+        const isUnlocked  = tierIdx >= 0;
+        const hasPending  = pendingIdx !== null && pendingIdx > tierIdx;
+        const tierName    = TAROT_TIER[tierIdx] || '';
+
+        // Κατάσταση κάρτας:
+        // locked+pending  → Card_Back + glow "πάτα για αποκάλυψη"
+        // unlocked+pending→ πραγματική εικόνα + glow "πάτα για αναβάθμιση"
+        // unlocked        → πραγματική εικόνα, κανένα glow
+        // locked          → Card_Back, κανένα glow
+
+        let cardClass = 'tarot-card';
+        if(isUnlocked) cardClass += ` unlocked tier-${tierName}`;
+        else cardClass += ' locked';
+        if(hasPending) cardClass += ' tarot-pending';
+
+        const imgSrc = isUnlocked
+            ? getTarotImgUrl(tierIdx, card.img)
+            : CDN + 'Card_Back.webp';
+
+        // Hint text
+        let hintHTML = '';
+        if(hasPending && !isUnlocked){
+            hintHTML = `<div class="tarot-card-hint tarot-hint-new">✨ Πάτα για αποκάλυψη!</div>`;
+        } else if(hasPending && isUnlocked){
+            hintHTML = `<div class="tarot-card-hint tarot-hint-upgrade">⬆️ Πάτα για αναβάθμιση σε ${tierNames[pendingIdx]}!</div>`;
+        } else if(isUnlocked){
+            const nextTierIdx = tierIdx + 1;
+            if(nextTierIdx <= 2){
+                hintHTML = `<div class="tarot-card-hint">🔒 ${card.tiers[nextTierIdx]} για ${tierNames[nextTierIdx]} επίπεδο</div>`;
+            } else {
+                hintHTML = `<div class="tarot-card-tier tier-${tierName}">Μέγιστο επίπεδο!</div>`;
+            }
+        } else {
+            hintHTML = `<div class="tarot-card-hint">🔒 ${card.tiers[0]} για ${tierNames[0]} επίπεδο</div>`;
+        }
+
+        const div = document.createElement('div');
+        div.className = cardClass;
+        div.innerHTML = `
+            <div class="tarot-card-inner">
+                <div class="tarot-card-front">
+                    <img src="${imgSrc}" alt="${card.name}">
+                </div>
+            </div>
+            <div class="tarot-card-name">${card.name}</div>
+            <div class="tarot-card-desc">${card.desc || ''}</div>
+            ${hintHTML}
+        `;
+
+        if(hasPending){
+            div.addEventListener('click', ()=>flipTarotCard(div, card, tierIdx, pendingIdx));
+        }
+
+        grid.appendChild(div);
+    }
+}
+
+// Flip animation — tierIdx=τρέχον, pendingIdx=νέο tier που ξεκλειδώνει
+function flipTarotCard(div, card, tierIdx, pendingIdx){
+    if(div.classList.contains('flipping')) return;
+
+    const newTierIdx = pendingIdx;
+    const newTierName = TAROT_TIER[newTierIdx];
+    const tierNames = ['Πορφυρό','Σμαραγδένιο','Χρυσό'];
+
+    // Αποθήκευση αμέσως — fire and forget
+    saveTarotFlip(card, newTierIdx);
+
+    // Animation αμέσως
+    div.classList.add('flipping');
+    playAvatarUnlock();
+
+    // Φάση 1→2: αλλαγή εικόνας + flip-in
+    setTimeout(() => {
+        const img = div.querySelector('img');
+        if(img) img.src = getTarotImgUrl(newTierIdx, card.img);
+
+        div.classList.remove('locked', 'tarot-pending', 'flipping');
+        div.classList.add('unlocked', `tier-${newTierName}`, 'flipping-in');
+        TAROT_TIER.forEach(t => { if(t !== newTierName) div.classList.remove(`tier-${t}`); });
+
+        const hint = div.querySelector('.tarot-card-hint, .tarot-card-tier');
+        const nextTierIdx = newTierIdx + 1;
+        if(hint){
+            if(nextTierIdx <= 2){
+                hint.className = 'tarot-card-hint';
+                hint.textContent = `🔒 ${card.tiers[nextTierIdx]} για ${tierNames[nextTierIdx]} επίπεδο`;
+            } else {
+                hint.className = `tarot-card-tier tier-${newTierName}`;
+                hint.textContent = 'Μέγιστο επίπεδο!';
+            }
+        }
+    }, 300);
+
+    // Φάση 3: καθάρισμα + sync swipe
+    setTimeout(() => {
+        div.classList.remove('flipping-in');
+        div.replaceWith(div.cloneNode(true));
+        // Sync swipe view αν είναι ανοιχτό
+        const swipeView = document.getElementById('tarot-swipe-view');
+        if(swipeView && swipeView.style.display !== 'none') renderTarotSwipe();
+    }, 650);
+}
+
+let tarotSwipeIndex = 0;
+let tarotDragStartX = 0;
+let tarotDragging = false;
+let tarotDragOffset = 0;
+let tarotAnimating = false;
+
+// Helper: διαβάζει tarot state (υποστηρίζει παλιό number format και νέο object format)
+function getTarotState(cardId){
+    const cached = (playerProfile.tarot || {})[cardId];
+    if(cached === undefined) return { tierIdx: -1, pendingIdx: null };
+    if(typeof cached === 'object'){
+        return {
+            tierIdx: cached.tierIdx !== undefined ? cached.tierIdx : -1,
+            pendingIdx: cached.pendingTierIdx !== undefined ? cached.pendingTierIdx : null
+        };
+    }
+    // παλιό format (number)
+    return { tierIdx: cached, pendingIdx: null };
+}
+
+function getTarotCardHTML(idx){
+    const c = TAROT_CARDS[idx];
+    const { tierIdx, pendingIdx } = getTarotState(c.id);
+    const isUnlocked = tierIdx >= 0;
+    const hasPending = pendingIdx !== null && pendingIdx > tierIdx;
+    const tierName = TAROT_TIER[tierIdx] || '';
+    return { c, tierIdx, pendingIdx, isUnlocked, hasPending, tierName,
+        img: getTarotImgUrl(isUnlocked ? tierIdx : -1, c.img) };
+}
+
+function updateTarotInfoText(idx){
+    const infoEl = document.getElementById('tarot-swipe-info-text');
+    if(!infoEl) return;
+    const c = TAROT_CARDS[idx];
+    const { tierIdx, pendingIdx } = getTarotState(c.id);
+    const isUnlocked = tierIdx >= 0;
+    const hasPending = pendingIdx !== null && pendingIdx > tierIdx;
+    const tierName = TAROT_TIER[tierIdx] || '';
+    const tierNames = ['Πορφυρό','Σμαραγδένιο','Χρυσό'];
+    const nextGoal = tierIdx < 2 ? `${c.tiers[tierIdx+1]} για ${tierNames[tierIdx+1]} επίπεδο` : null;
+
+    let statusHTML = '';
+    if(hasPending && !isUnlocked){
+        statusHTML = `<div class="tarot-swipe-hint tarot-hint-new">✨ Πάτα για αποκάλυψη!</div>`;
+    } else if(hasPending && isUnlocked){
+        statusHTML = `<div class="tarot-swipe-hint tarot-hint-upgrade">⬆️ Πάτα για αναβάθμιση σε ${tierNames[pendingIdx]}!</div>`;
+    } else if(isUnlocked){
+        statusHTML = `<div class="tarot-swipe-tier tier-${tierName}">${tierNames[tierIdx]} επίπεδο</div>
+                      ${nextGoal ? `<div class="tarot-swipe-next">Επόμενο: ${nextGoal}</div>` : '<div class="tarot-swipe-next">Μέγιστο επίπεδο!</div>'}`;
+    } else {
+        statusHTML = `<div class="tarot-swipe-hint">🔒 ${c.tiers[0]} για Πορφυρό επίπεδο</div>`;
+    }
+
+    infoEl.innerHTML = `
+        <div class="tarot-swipe-name">${c.name}</div>
+        <div class="tarot-swipe-desc">${c.desc || ''}</div>
+        ${statusHTML}
+    `;
+}
+
+function renderTarotCardEl(el, idx){ /* kept for compat */ }
+function renderTarotSideCard(el, idx){ /* kept for compat */ }
+
+function renderTarotSwipe(){
+    const stack = document.getElementById('tarot-swipe-track');
+    const dots = document.getElementById('tarot-swipe-dots');
+    if(!stack) return;
+
+    dots.style.display = 'flex';
+    const total = TAROT_CARDS.length;
+
+    // Φτιάξε στοίβα από 3 κάρτες
+    stack.innerHTML = '';
+    for(let offset = 2; offset >= 0; offset--){
+        const idx = (tarotSwipeIndex + offset) % total;
+        const { img, tierName, isUnlocked, hasPending, pendingIdx, c, tierIdx } = getTarotCardHTML(idx);
+        const div = document.createElement('div');
+        let cls = `tarot-stack-card tarot-swipe-card-inner ${isUnlocked ? 'tier-'+tierName : 'locked'}`;
+        if(hasPending) cls += ' tarot-pending';
+        if(offset === 0) cls += ' tarot-top-card';
+        div.className = cls;
+        div.style.cssText = offset === 0
+            ? 'z-index:3; transform:none;'
+            : `z-index:${3-offset}; transform: translateY(${offset*4}px) rotate(${offset===1 ? -4 : 4}deg) scale(${1 - offset*0.03});`;
+        div.innerHTML = `<img src="${img}" alt="${c.name}" draggable="false">`;
+
+        // Tap-to-flip για top card με pending
+        if(offset === 0 && hasPending){
+            div.style.cursor = 'pointer';
+            div.addEventListener('click', (e) => {
+                // Αγνόησε αν ήταν drag
+                if(Math.abs(tarotDragOffset) > 10) return;
+                flipTarotCardSwipe(div, c, tierIdx, pendingIdx);
+            });
+        }
+
+        stack.appendChild(div);
+    }
+
+    updateTarotInfoText(tarotSwipeIndex);
+
+    dots.innerHTML = TAROT_CARDS.map((_,i) =>
+        `<div class="tarot-dot ${i===tarotSwipeIndex?'active':''}"></div>`
+    ).join('');
+
+    setupTarotDrag();
+}
+
+// Κοινή αποθήκευση tarot flip (Firestore + local cache) — fire and forget
+function saveTarotFlip(card, newTierIdx){
+    const newTierName = TAROT_TIER[newTierIdx];
+    if(!playerProfile.tarot) playerProfile.tarot = {};
+    playerProfile.tarot[card.id] = { tierIdx: newTierIdx, pendingTierIdx: null, seen: true };
+    if(isGoogleUser() && window.firebaseDB){
+        window.firebaseSetDoc(
+            window.firebaseDoc(window.firebaseDB, 'players', playerProfile.uid, 'tarot', card.id),
+            { tierIdx: newTierIdx, tier: newTierName, pendingTierIdx: window.firebaseDeleteField(), seen: true },
+            { merge: true }
+        ).catch(e => console.error('Tarot flip save error:', e));
+    }
+}
+
+// Flip για swipe view
+function flipTarotCardSwipe(div, card, tierIdx, pendingIdx){
+    if(div.classList.contains('flipping')) return;
+
+    const newTierIdx = pendingIdx;
+
+    // Αποθήκευση αμέσως (fire and forget)
+    saveTarotFlip(card, newTierIdx);
+
+    // Animation αμέσως — χωρίς await
+    div.classList.add('flipping');
+    playAvatarUnlock();
+
+    setTimeout(() => {
+        const img = div.querySelector('img');
+        if(img) img.src = getTarotImgUrl(newTierIdx, card.img);
+        div.classList.remove('flipping');
+        div.classList.add('flipping-in');
+    }, 300);
+
+    setTimeout(() => {
+        renderTarotSwipe();
+        // Sync με grid αν είναι rendered
+        const gridCard = document.querySelector(`#tarot-grid .tarot-card:nth-child(${TAROT_CARDS.findIndex(c=>c.id===card.id)+1})`);
+        if(gridCard) renderTarotCollection();
+    }, 650);
+}
+
+function animateTarotSlide(dir, callback){
+    if(tarotAnimating) return;
+    tarotAnimating = true;
+    playCardFlipSound();
+
+    const stack = document.getElementById('tarot-swipe-track');
+    const topCard = stack ? stack.querySelector('.tarot-top-card') : null;
+    if(!topCard){ tarotAnimating=false; callback(); return; }
+
+    topCard.style.transition = 'transform 0.28s ease, opacity 0.28s ease';
+    topCard.style.transform = `translateX(${dir * 350}px) rotate(${dir * 15}deg)`;
+    topCard.style.opacity = '0';
+
+    setTimeout(() => {
+        tarotAnimating = false;
+        callback();
+    }, 280);
+}
+
+function setupTarotDrag(){
+    const stack = document.getElementById('tarot-swipe-track');
+    if(!stack || stack._dragSetup) return;
+    stack._dragSetup = true;
+
+    const THRESHOLD = 60;
+
+    const onStart = (x) => {
+        if(tarotAnimating) return;
+        tarotDragStartX = x;
+        tarotDragging = true;
+        tarotDragOffset = 0;
+    };
+
+    const onMove = (x) => {
+        if(!tarotDragging || tarotAnimating) return;
+        tarotDragOffset = x - tarotDragStartX;
+        const topCard = stack.querySelector('.tarot-top-card');
+        if(topCard){
+            const rotate = tarotDragOffset * 0.06;
+            topCard.style.transform = `translateX(${tarotDragOffset}px) rotate(${rotate}deg)`;
+        }
+    };
+
+    const onEnd = () => {
+        if(!tarotDragging) return;
+        tarotDragging = false;
+        const topCard = stack.querySelector('.tarot-top-card');
+
+        if(Math.abs(tarotDragOffset) > THRESHOLD){
+            const dir = tarotDragOffset > 0 ? 1 : -1;
+            if(topCard){
+                topCard.style.transition = 'transform 0.25s ease, opacity 0.25s ease';
+                topCard.style.transform = `translateX(${dir*400}px) rotate(${dir*20}deg)`;
+                topCard.style.opacity = '0';
+            }
+            playCardFlipSound();
+            setTimeout(() => {
+                if(dir > 0) tarotSwipePrev();
+                else tarotSwipeNext();
+            }, 250);
+        } else {
+            if(topCard){
+                topCard.style.transition = 'transform 0.25s ease';
+                topCard.style.transform = '';
+                setTimeout(() => { topCard.style.transition = ''; }, 250);
+            }
+        }
+    };
+
+    stack.addEventListener('mousedown', e => onStart(e.clientX));
+    window.addEventListener('mousemove', e => { if(tarotDragging) onMove(e.clientX); });
+    window.addEventListener('mouseup', onEnd);
+    stack.addEventListener('touchstart', e => onStart(e.touches[0].clientX), {passive:true});
+    stack.addEventListener('touchmove', e => { if(tarotDragging) onMove(e.touches[0].clientX); }, {passive:true});
+    stack.addEventListener('touchend', onEnd);
+}
+
+function tarotSwipeNext(){
+    animateTarotSlide(-1, () => {
+        tarotSwipeIndex = (tarotSwipeIndex + 1) % TAROT_CARDS.length;
+        renderTarotSwipe();
+    });
+}
+
+function tarotSwipePrev(){
+    animateTarotSlide(1, () => {
+        tarotSwipeIndex = (tarotSwipeIndex - 1 + TAROT_CARDS.length) % TAROT_CARDS.length;
+        renderTarotSwipe();
+    });
+}
